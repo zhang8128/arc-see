@@ -74,7 +74,7 @@ class GameSession:
         if not self.frames:
             return "No frame available. Call reset() first."
         grid = self.frames[-1]
-        history = self.frames[:-1]
+        history = self.frames[-10:-1] if len(self.frames) > 1 else []
         self.annotations = self.composer.perceive(grid, history)
         return self._format_perception(self.annotations, grid)
 
@@ -82,6 +82,9 @@ class GameSession:
         self, action_name: str, x: int | None = None, y: int | None = None
     ) -> str:
         """Execute an action and return observation diff as text."""
+        if not self.frames:
+            return "No frame available. Call reset() first."
+
         # Validate action
         available = {
             k for k, v in _ACTION_MAP.items()
@@ -97,6 +100,8 @@ class GameSession:
         prev_grid = self.frames[-1] if self.frames else None
 
         data: dict = {}
+        if (x is None) != (y is None):
+            return "Both x and y are required for coordinate actions."
         if x is not None and y is not None:
             data = {"x": x, "y": y}
         obs = self.env.step(game_action, data=data)
@@ -124,14 +129,14 @@ class GameSession:
             self._cells_changed_history.append(changed)
 
         # Run perception on new frame
-        history = self.frames[:-1]
+        history = self.frames[-10:-1] if len(self.frames) > 1 else []
         self.annotations = self.composer.perceive(grid, history)
 
         return "\n".join(parts)
 
     def reflect(self) -> str:
         """Summarize the session history."""
-        parts = [f"## Session Reflection"]
+        parts = ["## Session Reflection"]
         parts.append(f"Turns: {self.turn_count} (total: {self.total_turns})")
         parts.append(f"Levels completed: {self.levels_completed}")
         parts.append(f"Game state: {self.last_state.name}")
@@ -144,9 +149,12 @@ class GameSession:
                 freq[a] = freq.get(a, 0) + 1
             parts.append(f"Action frequency: {freq}")
 
-        if self.learned:
+        # Show non-standard learned keys (player/goal/physics have dedicated lines below)
+        _dedicated_keys = {"player_color", "goal_color", "physics", "last_direction"}
+        extra_learned = {k: v for k, v in self.learned.items() if k not in _dedicated_keys}
+        if extra_learned:
             parts.append("Learned:")
-            for k, v in self.learned.items():
+            for k, v in extra_learned.items():
                 parts.append(f"  {k}: {v}")
 
         # Player/goal positions from learned colors + current frame
@@ -311,7 +319,7 @@ class GameSession:
             sections.append("### Goal Detection\n" + "\n".join(goal_parts))
 
         # Game Semantics
-        semantics = [f"### Game Semantics"]
+        semantics = ["### Game Semantics"]
         semantics.append(self._format_color_census(grid))
         if "player_color" in self.learned:
             pc = int(self.learned["player_color"])
@@ -329,12 +337,6 @@ class GameSession:
 
         # Compact grid
         sections.append("### Grid (4x downsampled)\n" + self._render_grid_compact(grid))
-
-        # Connected Components summary (always include for test assertions)
-        for name, ann in annotations.items():
-            if isinstance(ann, RegionLabels) and "Connected Components" in name:
-                sections.insert(0, f"**Connected Components**: {ann.count} regions found")
-                break
 
         return "\n\n".join(sections)
 
@@ -366,6 +368,12 @@ class GameSession:
 
         total_cells = curr.shape[0] * curr.shape[1]
         parts = []
+
+        # Pick the player as the moved color with the smallest pixel count
+        # (players are typically small objects, not large backgrounds)
+        color_sizes = {c: int((curr == c).sum()) for c in moved_colors}
+        player_candidate = min(color_sizes, key=color_sizes.get)
+
         for color in moved_colors:
             prev_center = self._find_color_center(prev, color)
             curr_center = self._find_color_center(curr, color)
@@ -374,27 +382,27 @@ class GameSession:
                 dx = curr_center[1] - prev_center[1]
                 dist = float(np.sqrt(dy**2 + dx**2))
                 direction = []
-                if dy < -1:
+                if dy < -0.5:
                     direction.append("up")
-                elif dy > 1:
+                elif dy > 0.5:
                     direction.append("down")
-                if dx < -1:
+                if dx < -0.5:
                     direction.append("left")
-                elif dx > 1:
+                elif dx > 0.5:
                     direction.append("right")
-                dir_str = "+".join(direction) if direction else "stationary"
+                dir_str = "+".join(direction) if direction else "minimal"
                 parts.append(
                     f"Color {color} moved {dir_str} "
                     f"(dy={dy:.1f}, dx={dx:.1f})"
                 )
-                # Learn player color
-                self.learned["player_color"] = str(color)
-                self.learned["last_direction"] = dir_str
-                # Physics inference
-                if dist > 2.0:
-                    self.learned["physics"] = "SLIDING"
-                elif dist > 0:
-                    self.learned["physics"] = "STEPPING"
+                # Only learn from the player candidate
+                if color == player_candidate:
+                    self.learned["player_color"] = str(color)
+                    self.learned["last_direction"] = dir_str
+                    if dist > 2.0:
+                        self.learned["physics"] = "SLIDING"
+                    elif dist > 0:
+                        self.learned["physics"] = "STEPPING"
 
         # Goal color detection: rarest non-bg, non-player, non-wall color <5%
         player_color = int(self.learned.get("player_color", -1))
@@ -409,7 +417,7 @@ class GameSession:
             # Skip wall-like colors (>30% of grid)
             if frac > 0.30:
                 continue
-            if frac < 0.05:
+            if frac <= 0.05:
                 self.learned["goal_color"] = str(c_int)
                 break
 

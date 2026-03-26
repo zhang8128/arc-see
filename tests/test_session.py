@@ -57,7 +57,7 @@ class TestGameSession:
         env = make_env(grid)
         session = GameSession(env)
         result = session.reset()
-        assert "Connected Components" in result or "Spatial" in result
+        assert "Spatial" in result
         assert len(session.frames) == 1
 
     def test_perceive_returns_text(self):
@@ -67,7 +67,7 @@ class TestGameSession:
         session = GameSession(env)
         session.reset()
         result = session.perceive()
-        assert "Spatial" in result or "Connected Components" in result
+        assert "Spatial" in result
         assert isinstance(result, str)
 
     def test_step_returns_diff(self):
@@ -101,7 +101,9 @@ class TestGameSession:
         session = GameSession(env)
         session.reset()
         result = session.step("ACTION1")
-        assert "moved" in result.lower() or "player" in result.lower() or "12" in result
+        # Player color 12 should be detected and learned
+        assert session.learned.get("player_color") == "12"
+        assert "moved" in result.lower()
 
     def test_reflect_summarizes_session(self):
         from arc_see.session import GameSession
