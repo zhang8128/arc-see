@@ -81,6 +81,28 @@ class SizeCount:
     count_by_size: dict[int, int]  # pixel_count → number of objects with that size
 
 @dataclass(frozen=True)
+class InteractionEvent:
+    """A single observed interaction: player moved to a cell and something happened."""
+    position: tuple[int, int]       # (row, col) where it happened
+    color: int                      # color of the cell that was interacted with
+    event_type: str                 # "pickup" (disappeared), "toggle", "block"
+    turn: int                       # which turn this happened on
+
+@dataclass(frozen=True)
+class MechanicsMap:
+    """Inferred game mechanics from observed interactions.
+
+    Tracks what happens when the player contacts different colored cells.
+    Collectable colors disappear on contact (pickups). Blocking colors stop movement.
+    """
+    collectables: dict[int, list[tuple[int, int]]]  # color → remaining positions
+    collected: list[InteractionEvent]                # history of pickups
+    blocking_colors: set[int]                        # colors that stop movement
+    total_collected: int                             # count of all pickups so far
+    player_color: int | None                         # inferred player color
+    player_position: tuple[int, int] | None          # current player (row, col)
+
+@dataclass(frozen=True)
 class GoalCandidate:
     """A single detected goal pattern."""
     pattern: np.ndarray         # extracted goal region
@@ -100,6 +122,7 @@ Annotation = (
     DisplacementField | ChangeMask | StateChangeMask |
     SymmetryResult | PeriodicityResult | AlignmentResult |
     ProximityGraph | ColorCorrespondence | SizeCount |
+    InteractionEvent | MechanicsMap |
     GoalCandidate | GoalDetection
 )
 

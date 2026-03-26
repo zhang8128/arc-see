@@ -20,6 +20,7 @@ from arc_see.lenses import (
     ColorCorrespondence,
     SizeCount,
     GoalDetection,
+    MechanicsMap,
     Annotation,
 )
 
@@ -65,6 +66,12 @@ class GameSession:
         self.turn_count = 0
         self.last_state = GameState.NOT_FINISHED
         self._cells_changed_history = []
+
+        # Reset stateful lenses
+        from arc_see.lenses import get_all
+        for lens in get_all().values():
+            if hasattr(lens, 'reset'):
+                lens.reset()
 
         self.annotations = self.composer.perceive(grid, [])
         return self._format_perception(self.annotations, grid)
@@ -317,6 +324,30 @@ class GameSession:
                 )
         if goal_parts:
             sections.append("### Goal Detection\n" + "\n".join(goal_parts))
+
+        # Mechanics (pickups, blocking, interactions)
+        mechanics_parts: list[str] = []
+        for name, ann in annotations.items():
+            if isinstance(ann, MechanicsMap):
+                if ann.player_color is not None:
+                    pos_str = f"row={ann.player_position[0]}, col={ann.player_position[1]}" if ann.player_position else "unknown"
+                    mechanics_parts.append(f"- Player: color {ann.player_color}, position {pos_str}")
+                if ann.total_collected > 0:
+                    mechanics_parts.append(f"- Pickups collected: {ann.total_collected}")
+                    recent = ann.collected[-3:] if len(ann.collected) > 3 else ann.collected
+                    for event in recent:
+                        mechanics_parts.append(
+                            f"  - color {event.color} at ({event.position[0]}, {event.position[1]}) on turn {event.turn}"
+                        )
+                if ann.collectables:
+                    total_remaining = sum(len(pos) for pos in ann.collectables.values())
+                    mechanics_parts.append(f"- Remaining collectables: {total_remaining}")
+                    for color, positions in ann.collectables.items():
+                        mechanics_parts.append(f"  - color {color}: {len(positions)} cells")
+                if ann.blocking_colors:
+                    mechanics_parts.append(f"- Blocking colors (walls): {sorted(ann.blocking_colors)}")
+        if mechanics_parts:
+            sections.append("### Mechanics\n" + "\n".join(mechanics_parts))
 
         # Game Semantics
         semantics = ["### Game Semantics"]

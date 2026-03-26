@@ -22,6 +22,7 @@ from arc_see.lenses import (
     ColorCorrespondence,
     SizeCount,
     GoalDetection,
+    MechanicsMap,
     get_all,
 )
 
@@ -31,6 +32,7 @@ import arc_see.lenses.temporal     # noqa: F401
 import arc_see.lenses.structural   # noqa: F401
 import arc_see.lenses.relational   # noqa: F401
 import arc_see.lenses.goal         # noqa: F401
+import arc_see.lenses.mechanics    # noqa: F401
 
 
 class Composer:
@@ -232,4 +234,6 @@ class Composer:
             return len(annotation.sizes) > 0
         if isinstance(annotation, GoalDetection):
             return len(annotation.goals) > 0
+        if isinstance(annotation, MechanicsMap):
+            return annotation.total_collected > 0 or len(annotation.collectables) > 0
         return False
