@@ -81,6 +81,8 @@ class TestGameSession:
         assert "ACTION1" in result
         assert "NOT_FINISHED" in result
         assert session.turn_count == 1
+        assert session.total_turns == 1
+        assert "Turn:" in result
 
     def test_step_invalid_action(self):
         from arc_see.session import GameSession
@@ -112,6 +114,9 @@ class TestGameSession:
         result = session.reflect()
         assert "Turns" in result or "turns" in result
         assert "ACTION1" in result
+        # Check for physics/positions in reflect output
+        assert "Physics" in result or "physics" in result.lower()
+        assert "Player position" in result or "player_color" in result
 
     def test_status_returns_state(self):
         from arc_see.session import GameSession
@@ -122,6 +127,7 @@ class TestGameSession:
         result = session.status()
         assert "NOT_FINISHED" in result or "not_finished" in result.lower()
         assert "test-game" in result.lower() or "TEST" in result
+        assert "Available actions" in result or "available" in result.lower()
 
     def test_reset_preserves_learned(self):
         from arc_see.session import GameSession

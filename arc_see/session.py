@@ -42,11 +42,13 @@ class GameSession:
         self.composer = Composer()
         self.frames: list[np.ndarray] = []
         self.annotations: dict[str, Annotation] = {}
-        self.action_history: list[str] = []
+        self._action_history: list[str] = []
         self.turn_count: int = 0
+        self.total_turns: int = 0
         self.levels_completed: int = 0
-        self.game_state: GameState = GameState.NOT_FINISHED
+        self.last_state: GameState = GameState.NOT_FINISHED
         self.learned: dict[str, str] = {}
+        self._cells_changed_history: list[int] = []
 
     # ------------------------------------------------------------------
     # Public API
@@ -59,9 +61,10 @@ class GameSession:
 
         # Reset per-episode state but preserve learned
         self.frames = [grid]
-        self.action_history = []
+        self._action_history = []
         self.turn_count = 0
-        self.game_state = GameState.NOT_FINISHED
+        self.last_state = GameState.NOT_FINISHED
+        self._cells_changed_history = []
 
         self.annotations = self.composer.perceive(grid, [])
         return self._format_perception(self.annotations, grid)
@@ -75,7 +78,9 @@ class GameSession:
         self.annotations = self.composer.perceive(grid, history)
         return self._format_perception(self.annotations, grid)
 
-    def step(self, action_name: str) -> str:
+    def step(
+        self, action_name: str, x: int | None = None, y: int | None = None
+    ) -> str:
         """Execute an action and return observation diff as text."""
         # Validate action
         available = {
@@ -91,12 +96,16 @@ class GameSession:
         game_action = _ACTION_MAP[action_name]
         prev_grid = self.frames[-1] if self.frames else None
 
-        obs = self.env.step(game_action, data={})
+        data: dict = {}
+        if x is not None and y is not None:
+            data = {"x": x, "y": y}
+        obs = self.env.step(game_action, data=data)
         grid = np.array(obs.frame[-1], dtype=np.int64)
         self.frames.append(grid)
-        self.action_history.append(action_name)
+        self._action_history.append(action_name)
         self.turn_count += 1
-        self.game_state = obs.state
+        self.total_turns += 1
+        self.last_state = obs.state
 
         if obs.state == GameState.WIN:
             self.levels_completed += 1
@@ -104,6 +113,7 @@ class GameSession:
         # Compute diff
         parts = [f"## Action: {action_name}"]
         parts.append(f"State: {obs.state.name}")
+        parts.append(f"Turn: {self.turn_count} (total: {self.total_turns})")
 
         if prev_grid is not None:
             diff = self._detect_movement(prev_grid, grid)
@@ -111,26 +121,26 @@ class GameSession:
                 parts.append(f"Movement: {diff}")
             changed = int(np.sum(prev_grid != grid))
             parts.append(f"Pixels changed: {changed}")
+            self._cells_changed_history.append(changed)
 
         # Run perception on new frame
         history = self.frames[:-1]
         self.annotations = self.composer.perceive(grid, history)
 
-        # Update learned state from movement detection
         return "\n".join(parts)
 
     def reflect(self) -> str:
         """Summarize the session history."""
         parts = [f"## Session Reflection"]
-        parts.append(f"Turns: {self.turn_count}")
+        parts.append(f"Turns: {self.turn_count} (total: {self.total_turns})")
         parts.append(f"Levels completed: {self.levels_completed}")
-        parts.append(f"Game state: {self.game_state.name}")
+        parts.append(f"Game state: {self.last_state.name}")
 
-        if self.action_history:
-            parts.append(f"Actions taken: {', '.join(self.action_history)}")
+        if self._action_history:
+            parts.append(f"Actions taken: {', '.join(self._action_history)}")
             # Action frequency
             freq: dict[str, int] = {}
-            for a in self.action_history:
+            for a in self._action_history:
                 freq[a] = freq.get(a, 0) + 1
             parts.append(f"Action frequency: {freq}")
 
@@ -139,18 +149,55 @@ class GameSession:
             for k, v in self.learned.items():
                 parts.append(f"  {k}: {v}")
 
+        # Player/goal positions from learned colors + current frame
+        if self.frames:
+            grid = self.frames[-1]
+            if "player_color" in self.learned:
+                pc = int(self.learned["player_color"])
+                pos = self._find_color_center(grid, pc)
+                if pos is not None:
+                    parts.append(f"Player position: row={pos[0]:.0f}, col={pos[1]:.0f}")
+            if "goal_color" in self.learned:
+                gc = int(self.learned["goal_color"])
+                pos = self._find_color_center(grid, gc)
+                if pos is not None:
+                    parts.append(f"Goal position: row={pos[0]:.0f}, col={pos[1]:.0f}")
+
+        # Physics model
+        if "physics" in self.learned:
+            parts.append(f"Physics: {self.learned['physics']}")
+
+        # Stuck detection
+        if len(self._cells_changed_history) >= 3:
+            if all(c == 0 for c in self._cells_changed_history[-3:]):
+                parts.append("WARNING: Stuck — last 3 actions had 0 cells changed")
+
+        # Top lens combinations
+        if self.annotations:
+            top = self.composer.top_k(self.annotations, k=3)
+            if top:
+                combo_strs = [
+                    f"  {a}+{b} (score={s:.2f})" for s, (a, b) in top
+                ]
+                parts.append("Top lens combinations:\n" + "\n".join(combo_strs))
+
         return "\n".join(parts)
 
     def status(self) -> str:
         """Return lightweight state info."""
         info = self.env.environment_info
+        available = sorted(
+            k for k, v in _ACTION_MAP.items()
+            if v in self.env.action_space
+        )
         parts = [
             f"Game: {info.game_id} ({info.title})",
-            f"State: {self.game_state.name}",
+            f"State: {self.last_state.name}",
             f"Turn: {self.turn_count}",
             f"Levels completed: {self.levels_completed}",
             f"Tags: {info.tags}",
             f"Baseline actions: {info.baseline_actions}",
+            f"Available actions: {available}",
         ]
         return "\n".join(parts)
 
@@ -266,6 +313,18 @@ class GameSession:
         # Game Semantics
         semantics = [f"### Game Semantics"]
         semantics.append(self._format_color_census(grid))
+        if "player_color" in self.learned:
+            pc = int(self.learned["player_color"])
+            pos = self._find_color_center(grid, pc)
+            pos_str = f"row={pos[0]:.0f}, col={pos[1]:.0f}" if pos else "not found"
+            semantics.append(f"Player: color {pc}, position {pos_str}")
+        if "goal_color" in self.learned:
+            gc = int(self.learned["goal_color"])
+            pos = self._find_color_center(grid, gc)
+            pos_str = f"row={pos[0]:.0f}, col={pos[1]:.0f}" if pos else "not found"
+            semantics.append(f"Goal: color {gc}, position {pos_str}")
+        if "physics" in self.learned:
+            semantics.append(f"Physics: {self.learned['physics']}")
         sections.append("\n".join(semantics))
 
         # Compact grid
@@ -305,6 +364,7 @@ class GameSession:
         if not moved_colors:
             return ""
 
+        total_cells = curr.shape[0] * curr.shape[1]
         parts = []
         for color in moved_colors:
             prev_center = self._find_color_center(prev, color)
@@ -312,6 +372,7 @@ class GameSession:
             if prev_center is not None and curr_center is not None:
                 dy = curr_center[0] - prev_center[0]
                 dx = curr_center[1] - prev_center[1]
+                dist = float(np.sqrt(dy**2 + dx**2))
                 direction = []
                 if dy < -1:
                     direction.append("up")
@@ -329,6 +390,28 @@ class GameSession:
                 # Learn player color
                 self.learned["player_color"] = str(color)
                 self.learned["last_direction"] = dir_str
+                # Physics inference
+                if dist > 2.0:
+                    self.learned["physics"] = "SLIDING"
+                elif dist > 0:
+                    self.learned["physics"] = "STEPPING"
+
+        # Goal color detection: rarest non-bg, non-player, non-wall color <5%
+        player_color = int(self.learned.get("player_color", -1))
+        unique_c, counts_c = np.unique(curr, return_counts=True)
+        for c, cnt in sorted(zip(unique_c, counts_c), key=lambda x: x[1]):
+            c_int = int(c)
+            frac = cnt / total_cells
+            if c_int == 0:
+                continue
+            if c_int == player_color:
+                continue
+            # Skip wall-like colors (>30% of grid)
+            if frac > 0.30:
+                continue
+            if frac < 0.05:
+                self.learned["goal_color"] = str(c_int)
+                break
 
         return "; ".join(parts)
 
