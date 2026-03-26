@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "arc-see": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "arc_see.mcp_server", "ls20-9607627b"],
+      "type": "stdio"
+    }
+  }
+}
