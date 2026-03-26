@@ -81,11 +81,17 @@ class SizeCount:
     count_by_size: dict[int, int]  # pixel_count → number of objects with that size
 
 @dataclass(frozen=True)
+class GoalCandidate:
+    """A single detected goal pattern."""
+    pattern: np.ndarray         # extracted goal region
+    location: tuple[int, int, int, int]  # (y1, x1, y2, x2) bounding box
+    similarity: float           # 0.0-1.0, similarity of current state to this goal
+
+@dataclass(frozen=True)
 class GoalDetection:
-    """Candidate goal pattern and similarity to current state."""
-    pattern: np.ndarray | None  # extracted goal region, or None if no goal detected
-    location: tuple[int, int, int, int] | None  # (y1, x1, y2, x2) bounding box
-    similarity: float           # 0.0-1.0, similarity of current state to goal
+    """Candidate goal patterns and similarity to current state."""
+    goals: list[GoalCandidate]  # all detected goal patterns
+    best_similarity: float      # highest similarity across all goals
 
 
 # Union of all annotation types
@@ -94,7 +100,7 @@ Annotation = (
     DisplacementField | ChangeMask | StateChangeMask |
     SymmetryResult | PeriodicityResult | AlignmentResult |
     ProximityGraph | ColorCorrespondence | SizeCount |
-    GoalDetection
+    GoalCandidate | GoalDetection
 )
 
 
