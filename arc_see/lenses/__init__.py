@@ -87,6 +87,19 @@ class InteractionEvent:
     color: int                      # color of the cell that was interacted with
     event_type: str                 # "pickup" (disappeared), "toggle", "block"
     turn: int                       # which turn this happened on
+    consequence: str | None = None  # what changed after: "new_cells_appeared", "path_opened", etc.
+
+@dataclass(frozen=True)
+class CausalHypothesis:
+    """An inferred cause-effect rule from repeated observations.
+
+    Example: "collecting color 3 causes new color-7 cells to appear"
+    """
+    trigger_color: int              # the color that was interacted with
+    trigger_type: str               # "pickup", "toggle", etc.
+    effect: str                     # description: "cells_appeared:7", "cells_disappeared:2", "no_game_over"
+    observations: int               # how many times this cause-effect was observed
+    confidence: float               # observations / opportunities (0.0-1.0)
 
 @dataclass(frozen=True)
 class MechanicsMap:
@@ -94,6 +107,7 @@ class MechanicsMap:
 
     Tracks what happens when the player contacts different colored cells.
     Collectable colors disappear on contact (pickups). Blocking colors stop movement.
+    Causal hypotheses infer WHAT pickups do (not just that they were collected).
     """
     collectables: dict[int, list[tuple[int, int]]]  # color → remaining positions
     collected: list[InteractionEvent]                # history of pickups
@@ -101,6 +115,7 @@ class MechanicsMap:
     total_collected: int                             # count of all pickups so far
     player_color: int | None                         # inferred player color
     player_position: tuple[int, int] | None          # current player (row, col)
+    hypotheses: list[CausalHypothesis] = field(default_factory=list)  # inferred rules
 
 @dataclass(frozen=True)
 class GoalCandidate:
@@ -122,7 +137,7 @@ Annotation = (
     DisplacementField | ChangeMask | StateChangeMask |
     SymmetryResult | PeriodicityResult | AlignmentResult |
     ProximityGraph | ColorCorrespondence | SizeCount |
-    InteractionEvent | MechanicsMap |
+    InteractionEvent | CausalHypothesis | MechanicsMap |
     GoalCandidate | GoalDetection
 )
 

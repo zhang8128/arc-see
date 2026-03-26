@@ -346,6 +346,13 @@ class GameSession:
                         mechanics_parts.append(f"  - color {color}: {len(positions)} cells")
                 if ann.blocking_colors:
                     mechanics_parts.append(f"- Blocking colors (walls): {sorted(ann.blocking_colors)}")
+                if ann.hypotheses:
+                    mechanics_parts.append("- Causal hypotheses (what do pickups DO?):")
+                    for h in ann.hypotheses[:5]:
+                        mechanics_parts.append(
+                            f"  - Collecting color {h.trigger_color} → {h.effect} "
+                            f"({h.observations}x observed, confidence={h.confidence:.0%})"
+                        )
         if mechanics_parts:
             sections.append("### Mechanics\n" + "\n".join(mechanics_parts))
 
