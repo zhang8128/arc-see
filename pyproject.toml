@@ -7,6 +7,7 @@ dependencies = [
     "numpy>=2.0",
     "scipy>=1.14",
     "arc-agi>=0.9",
+    "mcp>=1.0",
 ]
 
 [project.optional-dependencies]
