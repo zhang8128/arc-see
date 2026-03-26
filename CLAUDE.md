@@ -4,9 +4,11 @@ Perceptual lens system for ARC-AGI-3. The thesis: the bottleneck is seeing, not 
 
 ## Architecture
 
-13 CV lenses compose pairwise. Combinations scored by entropy reduction.
-Memory graph records state→action→state transitions using lens annotations.
-Action selection blends exploration (lens-guided) and exploitation (graph-guided).
+Lenses are Claude's eyes. Claude is the brain.
+
+13 CV lenses compose pairwise (scored by entropy reduction). An MCP server
+exposes the lenses + ARC-AGI-3 API as tools. A Claude session calls perceive()
+to see, step() to act, and reasons in natural language between calls.
 
 ## Testing
 
@@ -14,18 +16,18 @@ Action selection blends exploration (lens-guided) and exploitation (graph-guided
 uv run pytest tests/ -q
 ```
 
-## First Run Findings (2026-03-26)
+## Playing a game
 
-0/7 levels on LS20, score 0.0. Agent burned 129 turns without completing a level
-(human baseline: 21 actions for level 1). The current memory graph is the wrong
-abstraction — it records every transition equally and hits confidence=1.0 after
-50 turns despite zero progress. It's "confident" in wrong answers.
+Start a Claude Code session in this directory. The `.mcp.json` auto-connects
+to the arc-see MCP server (default game: ls20). Claude can then call:
 
-What's needed: a **mechanics ledger** (hypothesis-based: "ACTION1 moves cursor up"
-with confidence that updates on evidence), **plan memory** (short goal stack: "trying
-to move blue block right 3"), and **anti-memory** (what definitively doesn't work,
-to avoid wasting actions). These replace the current graph.py, which should be
-rethought or replaced entirely.
+- `reset()` — start/restart level, get initial perception
+- `perceive()` — run all lenses, get structured annotations
+- `step(action)` — take an action, see what changed
+- `reflect()` — summarize what's been learned
+- `status()` — quick state check
+
+To change games, edit the game_id in `.mcp.json`.
 
 ## Key Files
 
@@ -33,6 +35,6 @@ rethought or replaced entirely.
 |------|------|
 | `arc_see/lenses/` | 13 primitive lenses: spatial, temporal, structural, relational, goal |
 | `arc_see/composer.py` | Pairwise combination scoring via entropy reduction |
-| `arc_see/graph.py` | In-game memory graph |
-| `arc_see/agent.py` | Core loop: observe → perceive → consult → act |
-| `arc_see/runner.py` | ARC-AGI-3 API integration |
+| `arc_see/session.py` | GameSession — state container with text-based perception/action |
+| `arc_see/mcp_server.py` | MCP server — exposes session methods as tools |
+| `.mcp.json` | Claude Code MCP server config |
