@@ -1,0 +1,282 @@
+[
+  {
+    "insight": "Terrain inversion: color 5 (with color-3 decorative dots) is NOT-walkable (wall). Color 10 (`a`) IS walkable. The sprite temporarily renders `5` under itself while traversing an `a` cell, reverting on departure. Total `a` count is conserved by pure motion.",
+    "category": "mechanic",
+    "turn": 5,
+    "level": -1,
+    "timestamp": "2026-04-13T18:03:36.118052"
+  },
+  {
+    "insight": "Click (ACTION6 x,y) destroys color-14 `e` items whose footprint contains (col=x,row=y) and converts the footprint to walkable `a`. Player does not move on click. Example: click (15,3) removed 21 color-14 cells, added 25 color-10 cells.",
+    "category": "mechanic",
+    "turn": 5,
+    "level": -1,
+    "timestamp": "2026-04-13T18:03:37.925283"
+  },
+  {
+    "insight": "Row 63 is a turn-used indicator (one `f`=color 15 per turn, one `.`=color 0 consumed per turn). Lens mislabels color 15 as Goal; ignore. L1 budget = 15 turns.",
+    "category": "observation",
+    "turn": 5,
+    "level": -1,
+    "timestamp": "2026-04-13T18:03:39.879633"
+  },
+  {
+    "insight": "L1 start: player at rows 38-42 cols 20-22 in a narrow vertical `a`-corridor. Seven `e` items total \u2014 3 top cluster (rows 1-5 cols 13-29) and 4 middle cluster (rows 13-17 cols 31-53). Big `a` regions visible at rows 19-29 cols 13-53 and row 30-36 col 43-47 (vertical column).",
+    "category": "observation",
+    "turn": 5,
+    "level": 1,
+    "timestamp": "2026-04-13T18:03:42.165703"
+  },
+  {
+    "insight": "ACTION7 = full-state UNDO of the last modifying action (pops the undo stack). Confirmed: after clicking an item then ACTION7 two turns later, the item was RESTORED (color-14 count went from 0 back to 21). UNDO still costs 1 turn. It's not just player-position undo \u2014 it reverts item destruction too. Useful when you want to try a click/move and back it out, but it doesn't expand your budget.",
+    "category": "mechanic",
+    "turn": 14,
+    "level": -1,
+    "timestamp": "2026-04-13T18:08:00.572587"
+  },
+  {
+    "insight": "ACTION3 = move LEFT one 5-cell step. ACTION4 = move RIGHT one 5-cell step. Step is discrete: if the adjacent step-destination is wall (color 5), the action is blocked and only the turn-counter advances. Player only moves horizontally \u2014 no vertical motion action exists in [3,4,6,7]. To reach upper rows the player must either wait for them to become connected via item-destruction-created corridors + some missing mechanic I haven't found, or the game has a different primary loop that isn't \"navigate\".",
+    "category": "mechanic",
+    "turn": 14,
+    "level": -1,
+    "timestamp": "2026-04-13T18:08:04.434446"
+  },
+  {
+    "insight": "Destroying a middle-cluster `e` item (rows 13-17, cols 31-35 / 37-41 / 43-47 / 49-53) ALSO converts the adjacent row-12 and row-18 wall cells above/below the item's 5-col footprint into walkable `a`, creating a VERTICAL TUNNEL through those wall belts. Destroying top-cluster items (rows 1-5) just opens the item footprint but does not cut through rows 6-11. The walls at rows 6-11 appear to stay as `5` regardless.",
+    "category": "mechanic",
+    "turn": 14,
+    "level": 1,
+    "timestamp": "2026-04-13T18:08:08.630760"
+  },
+  {
+    "insight": "Destroying ALL 7 items on L1 does NOT auto-win. State stays NOT_FINISHED. So the win condition is not 'clear all items'. Most likely: after opening the walkable corridor via items, something else (the player reaching a target, or a specific item-click order) triggers the win. Player at col 43-47 under the vertical tunnel is a candidate \u2014 but reaching it costs ~5-6 ACTION4 steps, so the solve almost certainly can't use all 7 clicks AND also walk there within 15 turns.",
+    "category": "hypothesis",
+    "turn": 14,
+    "level": 1,
+    "timestamp": "2026-04-13T18:08:13.260433"
+  },
+  {
+    "insight": "Click on empty `a` cell (no item there) is a no-op: only the turn counter advances, player doesn't move, nothing else changes. So ACTION6 is NOT a teleport/move-to mechanic \u2014 it's strictly item-destruction targeted at color-14 items. Click on wall (`5`) untested but probably also a no-op. Implication: the player's only positional control is ACTION3/4 (\u00b15 cells horizontal). Vertical motion must come from something we haven't unlocked yet \u2014 maybe an ACTION we haven't tried on a specific state, or gravity that activates only in specific conditions.",
+    "category": "mechanic",
+    "turn": 15,
+    "level": -1,
+    "timestamp": "2026-04-13T18:08:56.037466"
+  },
+  {
+    "insight": "CAMERA SCROLL: when the player's position crosses a specific threshold (observed: entering col 46 \u2014 i.e., stepping INTO the vertical column at cols 43-47 from the left at chamber row 38), the map's top portion is reshuffled in one action. 1140+ cells change in a single step. Items 'move down' ~11 rows and new items appear higher up (or: camera scrolls up, revealing what was above). Color-14 count jumps (e.g. 147\u2192273 = +126 = +6 items). This is ONE-SHOT per play \u2014 doing ACTION4 again from col 46\u219252 did NOT trigger another scroll. Implication: the world is larger than the 64x64 viewport; navigating is about triggering these scrolls to align with the goal. The actual win condition might involve reaching a position that becomes accessible only after scrolling.",
+    "category": "mechanic",
+    "turn": 21,
+    "level": -1,
+    "timestamp": "2026-04-13T18:13:05.352862"
+  },
+  {
+    "insight": "L1 strategy attempt: move ACTION4 from (38,22) \u2192 (38,28) \u2192 (38,34) \u2192 (38,40) \u2192 (38,46) [CAMERA SCROLL HERE] \u2192 (38,52). Each ACTION4 costs 1 turn and shifts ~6 cols. That's 5 turns just to cross the scroll threshold. After scroll, new items appear at cols 13-29 in rows 7-11, 13-17, 19-23 (9 items total). Clicking these still just destroys them, does not move player. Player cannot navigate vertically even after scroll. Destroying all items does not win. The missing mechanic to reach the goal is still unknown \u2014 possibly more scrolls from other thresholds, or a specific action/click pattern.",
+    "category": "hypothesis",
+    "turn": 21,
+    "level": 1,
+    "timestamp": "2026-04-13T18:13:09.960821"
+  },
+  {
+    "insight": "Scroll geometry on L1 is asymmetric: exactly ONE threshold, triggered going RIGHT when the player-sprite enters col 46 (cols 43-47 column). No left scroll; player cannot trigger any scroll going LEFT. Confirmed by sweeping col 52 \u2192 14 via ACTION3 (6 steps, no new scrolls), then blocked at col 14 both pre- and post-scroll. Scroll is permanent (going back left does NOT undo it). Horizontal bounds: [col 14, col 52]. Step size: ACTION3 = -6 cells, ACTION4 = +6 cells.",
+    "category": "mechanic",
+    "turn": 35,
+    "level": 1,
+    "timestamp": "2026-04-13T18:22:49.681900"
+  },
+  {
+    "insight": "Aligned-click negative result: post-scroll, clicking an item in the same column stack as the player (e.g. click (15,9) while player at col 14, hitting the leftmost item column cols 13-17) has the same effect as any other click \u2014 just destroys the item, player does NOT move or teleport. So item-column alignment is NOT special.",
+    "category": "observation",
+    "turn": 35,
+    "level": 1,
+    "timestamp": "2026-04-13T18:22:52.606032"
+  },
+  {
+    "insight": "L1 open mysteries after 2 attempts worth of probing: (1) What triggers WIN? Destroying items, reaching a position, and camera-scrolling alone don't win. (2) Is there a scroll trigger going further right past col 52 (blocked), or does the scroll only fire once period? (3) Does clicking at a specific cross-aligned position with the player unlock something I haven't tried? (4) Maybe combining ACTION3+ACTION6 in specific order, or using ACTION7 (undo) on a specific state, reveals the trick. Leaving this for the next session with the scroll mechanic now documented.",
+    "category": "hypothesis",
+    "turn": 35,
+    "level": 1,
+    "timestamp": "2026-04-13T18:22:57.051542"
+  },
+  {
+    "insight": "Disproven: destroying all 9 post-scroll left-side items doesn't win L1 (tested, state stays NOT_FINISHED). Also post-scroll there are actually MORE than 9 items \u2014 rows 31+ contain another 4-item row at cols 31-35, 37-41, 43-47, 49-53 (partially offscreen from normal viewport). Total items visible post-scroll is ~13, not 9. `win_score=9` from old notes is NOT literally 9 item-destructions. The win condition remains unknown. Either requires a scroll I haven't found, or requires a combination of player-position + click that I haven't tried.",
+    "category": "hypothesis",
+    "turn": 48,
+    "level": 1,
+    "timestamp": "2026-04-13T18:25:44.647943"
+  },
+  {
+    "insight": "HUGE FINDING: Scrolls can be CLICK-TRIGGERED, not just movement-triggered. Clicking the item directly above the player's column (at rows 31-35 cols 43-47 when player at col 46) after the first scroll causes a SECOND scroll (968 cells changed, 3 new items spawned). This is the key to the level progression: alternate between camera-scroll moves and aligned-clicks to advance. The scroll reveals NEW content above that was previously offscreen. This is probably the core L1 mechanic.",
+    "category": "mechanic",
+    "turn": 49,
+    "level": 1,
+    "timestamp": "2026-04-13T18:26:21.568872"
+  },
+  {
+    "insight": "REVISED L1 STRATEGY: the click-triggered scroll at step 14 means there are MULTIPLE scroll thresholds and the world is much bigger. Path forward: (1) 4 ACTION4s to reach col 46 (scroll #1 fires on entry), (2) click item directly above player at rows 31-35 cols 43-47 via (45,33) (scroll #2 fires), (3) likely more scrolls available. Win condition likely involves reaching the TRUE top of the world via successive scrolls. L1 budget = 15 is tight. On this run I wasted 9 turns clearing left-side items before discovering the click-scroll; next session should go: 4 moves + click(45,33) immediately, then keep pushing.",
+    "category": "strategy",
+    "turn": 49,
+    "level": 1,
+    "timestamp": "2026-04-13T18:26:27.790578"
+  },
+  {
+    "insight": "Multi-scroll camera puzzle. Scroll #1 fires on ACTION4 entering col 46 (from start). Scroll #2 fires on click at (45,33) \u2014 item directly above player's column. Budget 15. Likely need a chain of scroll-triggers (move-scroll then click-scroll alternating?) to reveal the goal. Destroying items on the side does nothing useful.",
+    "category": "summary",
+    "level": 1,
+    "turn": 49,
+    "timestamp": "2026-04-13T18:26:45.788007"
+  },
+  {
+    "insight": "REFINED click-scroll rule (after 3 test runs): scroll-trigger from clicks requires the destroyed item to be (a) directly ABOVE the player (lower row numbers) AND (b) its footprint overlaps with the player's column-corridor (e.g. player sprite cols 43-47 requires item at cols 43-47). Clicks on items beside player (same row) or below player (higher row) are just destruction, no scroll. Tested and confirmed: click (50, 57) below player at col 52 = only destruction; click (39, 15) beside = only destruction.",
+    "category": "mechanic",
+    "turn": 59,
+    "level": 1,
+    "timestamp": "2026-04-13T18:41:48.852496"
+  },
+  {
+    "insight": "L1 solve obstacle: after scroll #2, there are NO items in rows above the player that overlap with cols 43-47 (the original corridor) or cols 50-52 (current player col). So the scroll chain can't continue from this position. Either (1) player needs to move to a different column where an aligned-above item exists, (2) a different click-scroll rule I haven't found, or (3) win condition is something other than scroll-chaining all the way up. 3 scrolls with full knowledge would take ~12 turns (4 moves + 3 clicks + navigation), leaving ~3 buffer. Tight but doable if next session finds a clean chain.",
+    "category": "hypothesis",
+    "turn": 59,
+    "level": 1,
+    "timestamp": "2026-04-13T18:41:53.053801"
+  },
+  {
+    "insight": "L1 session 3 summary: Successfully chained 2 scrolls (move-scroll at col 46, click-scroll at item rows 31-35 cols 43-47) but couldn't find scroll #3. After scroll #2, no item is aligned-above the player in cols 43-47 corridor \u2014 the scroll seems to require this alignment. Possible next-session fix: after scroll #1, maybe move LEFT or right to different col BEFORE clicking to align with a different item's column; or the rule involves clicking a specific item type (e.g. the CORRIDOR item specifically). Known: game has a vertically-extending world revealed progressively by scrolls. Win condition likely at the top of the extended world.",
+    "category": "strategy",
+    "turn": 60,
+    "level": 1,
+    "timestamp": "2026-04-13T18:42:25.995208"
+  },
+  {
+    "insight": "L1 solver status after extensive exploration: 2 scrolls reliably chainable (ACTION4\u00d74 to col 46, then click (45,33)). Scroll #3 trigger NOT FOUND despite testing: (a) re-entering col 46 via move-away-and-back, (b) clicking items in cols 33/39 aligned items, (c) clicking aligned below-player items, (d) clicking player's own sprite, (e) clicking immediate-above row of player. None produce a third scroll. The click-scroll from scroll #2 seems tied to that specific item being in the specific position in the pre-scrolled layout. Suspicion: the scroll chain might be short (max 2 scrolls on L1) and the real L1 win condition is something else I'm not seeing, OR there's a precise click coord I haven't found (ruled out most obvious ones).",
+    "category": "hypothesis",
+    "turn": 73,
+    "level": 1,
+    "timestamp": "2026-04-13T18:51:06.219790"
+  },
+  {
+    "insight": "Overall L1 handoff for future sessions: start w/ ACTION4\u00d74\u2192scroll#1, ACTION6(45,33)\u2192scroll#2. After that, 10 turns remain but no scroll#3 discovered. Possible untested ideas: (1) UNDO creatively to revisit specific states, (2) click coords outside visible 64x64 (e.g. y=90), (3) click on individual color-3 decorative dots in walls, (4) try specific ACTION combinations like ACTION3+ACTION6 in rapid sequence, (5) the win condition may be independent of scrolls entirely \u2014 maybe something subtle about specific score/count thresholds. After 6+ attempts (~90 turns) the solve remains elusive.",
+    "category": "strategy",
+    "turn": 73,
+    "level": 1,
+    "timestamp": "2026-04-13T18:51:10.935431"
+  },
+  {
+    "insight": "FINAL L1 SESSION RESULT: After 7 full attempts (~100+ turns total across multiple reset cycles), scroll #3 was never triggered. Confirmed mechanics: scroll #1 on ACTION4 entering col 46 from start (deterministic), scroll #2 on ACTION6(45, 33) after scroll #1 (deterministic). Every other intervention tested: NO scroll #3. The level L1 solve may require something outside the scroll-chain model \u2014 possibly an ACTION I haven't combined in a specific way, or the game may have a hidden state variable (like click-count, time, or specific sequence). Recommended for next session: try more attempts with direct probes \u2014 e.g., during scroll #1 transition, interleave ACTION7 (undo) to see if it triggers a different state; try clicking items at exact corner positions of the revealed world; or consider whether the solution might involve deliberately LOSING to reveal new mechanics on L1 retry (some games unlock hints).",
+    "category": "strategy",
+    "turn": 74,
+    "level": 1,
+    "timestamp": "2026-04-13T18:51:54.957406"
+  },
+  {
+    "insight": "BP35 is NOT a gravity platformer (contradicts old memory). Grid is 64x64. Only ACTION3 (L 6 cells), ACTION4 (R 6 cells), ACTION6 (click destroy), ACTION7 (undo). Player moves ONLY horizontally. L1 budget=15 turns.",
+    "category": "mechanic",
+    "turn": 90,
+    "level": -1,
+    "timestamp": "2026-04-13T19:12:56.414556"
+  },
+  {
+    "insight": "Clicking on item blocks (eeeee, color 14) destroys them. Clicking on walkable (color 10), walls (5), dots (3), or player = no-op. Each item group is 5x5 with cross-pattern (21 cells). Click center to destroy.",
+    "category": "mechanic",
+    "turn": 90,
+    "level": -1,
+    "timestamp": "2026-04-13T19:12:58.317314"
+  },
+  {
+    "insight": "L1 layout: Dividing wall at row 30 splits upper room (rows 0-29, walkable corridor cols 13-53, 3 items at rows 13-17 cols 25-41) and lower room (rows 31-63, player at row 38, 3x3 item grid rows 31-47 cols 13-29, 3 bottom items rows 55-59 cols 31-41+49-53). Walkable slot cols 43-53 rows 53-60 below player BUT unreachable (no vertical move).",
+    "category": "observation",
+    "turn": 90,
+    "level": 1,
+    "timestamp": "2026-04-13T19:13:01.699701"
+  },
+  {
+    "insight": "FAILED ATTEMPTS L1: (1) Destroying all upper-row items doesn't win (2) Destroying center-of-3x3 doesn't win (3) Destroying isolated bottom-right item doesn't win (4) Clicking on walkable slot doesn't teleport player (5) Moving right to col 52 and destroying items doesn't win. Total item groups=16, budget=15 turns, so cannot destroy all.",
+    "category": "hypothesis",
+    "turn": 90,
+    "level": 1,
+    "timestamp": "2026-04-13T19:13:04.419726"
+  },
+  {
+    "insight": "Player sprite renders as 5x5 with walls (5s) framing body (9,11 colors). At start player pocket at rows 37-40 cols 43-47 has player at (38,46). Pocket MOVES with player. Row 38 walkable range: cols ~14-53. Col 54+ and col 12- are walls (blocked).",
+    "category": "mechanic",
+    "turn": 90,
+    "level": 1,
+    "timestamp": "2026-04-13T19:13:07.475259"
+  },
+  {
+    "insight": "ACTION4 x4 from fresh reset triggers Scroll #1 at col 40. Click at (45, 33) AFTER scroll triggers Scroll #2 (reveals lower room). Two 'scrolls' may be the world-reveal opening sequence \u2014 starting layout is smaller than final layout.",
+    "category": "observation",
+    "turn": 90,
+    "level": 1,
+    "timestamp": "2026-04-13T19:13:09.441865"
+  },
+  {
+    "insight": "BP35 L1 world is LARGER than one screen. ACTION4x4 from start (col 22\u219246) triggers Scroll #1 (1140 cells change). Click at (45,33) AFTER scroll 1 triggers Scroll #2 (1343 cells change). These scrolls reveal additional map sections with more item groups.",
+    "category": "mechanic",
+    "turn": 102,
+    "level": 1,
+    "timestamp": "2026-04-13T19:20:00.426535"
+  },
+  {
+    "insight": "BP35 player has ORIENTATION. First ACTION3 turn (from facing-right to facing-left) moves 8 cells. Subsequent ACTION3 moves 6. ACTION4 always 6 right. Player sprite renders mirrored based on direction (b on right when facing right, b on left when facing left).",
+    "category": "mechanic",
+    "turn": 102,
+    "level": -1,
+    "timestamp": "2026-04-13T19:20:03.087362"
+  },
+  {
+    "insight": "BP35 L1 TESTED BEHAVIORS: ACTION7 UNDO = no visible effect (per lens). Click on player self = no-op. Click on walkable = no-op. Click on wall = no-op. Click on item = destroys 21-cell group. Going right to col 52 = max right, ACTION4 blocks. Horizontal row 38 walkable range: cols ~14-52 blocked by items at cols 13-29 after scroll.",
+    "category": "hypothesis",
+    "turn": 102,
+    "level": 1,
+    "timestamp": "2026-04-13T19:20:06.894355"
+  },
+  {
+    "insight": "BP35 L1 NEVER WON across multiple 15-turn attempts. Budget baseline=15 very tight. Scrolls take 5+ turns, leaving only ~10 for other actions. Win condition NOT: clear upper row, destroy center item, reach col 52, reach col 14, click slot, click player, ACTION7, click 3x3 grid centers. Open hypothesis: maybe ACTION6 on specific wall cell or sequence of moves. Possibly scroll #3 hasn't been triggered yet.",
+    "category": "hypothesis",
+    "turn": 102,
+    "level": 1,
+    "timestamp": "2026-04-13T19:20:10.451811"
+  },
+  {
+    "insight": "BP35 L1 tried 7-click strategy (destroy all initial items before moving). All 7 items destroyed (3 upper at rows 1-5 cols 13-29 + 4 middle at rows 13-17 cols 31-53). GAME STILL NOT_FINISHED. Destroying items is NOT the win condition. After destroying all items, ACTION4 still moved player normally from col 22 (no special trigger).",
+    "category": "hypothesis",
+    "turn": 111,
+    "level": 1,
+    "timestamp": "2026-04-13T19:22:29.160200"
+  },
+  {
+    "insight": "BP35 L1 unsolved after extensive testing. Key mechanic still unknown. The scroll triggers are deterministic (ACTION4 at col 46 always triggers scroll #1 regardless of prior state). Suspect the game requires UP/DOWN movement via some mechanic I haven't discovered. Possibly clicking on specific wall cell, or a sequence. Next session should: (1) try clicking specific positions inside the slot with varying player positions, (2) try double-clicking items, (3) explore if ACTION3-ACTION4 sequence does anything special, (4) maybe the initial ACTION3 (turn around) changes the starting behavior.",
+    "category": "hypothesis",
+    "turn": 111,
+    "level": 1,
+    "timestamp": "2026-04-13T19:22:33.531265"
+  },
+  {
+    "insight": "BP35 L1 SOLVED in 15 actions (=baseline). Sequence: R R R R C7,19 L L C4,16 L C4,15 C4,12 R C5,9 L L. Mechanic: grid is 11x36, gravity UP (falls toward y=0). L/R = move 1 tile. Click grid(gx,gy) via screen(gx*6+3, gy*6-cam_y+3). Click on 'q' breakable = destroys + triggers gravity fall. Click coords in MCP are SCREEN coords not grid. Walls 'x' = not breakable, 'q' qclfkhjnaac = breakable, 'f' fjlzdjxhant = gem (WIN). Path: through col 7 row 19, then col 4 through rows 15,12, then col 5 row 9 to reach gem at (3,7).",
+    "category": "strategy",
+    "turn": 128,
+    "level": 1,
+    "timestamp": "2026-04-13T22:29:40.199482"
+  },
+  {
+    "insight": "BREAKTHROUGH TOOLING for BP35: Built (1) PNG renderer of 64x64 frames \u2014 lets me see the game visually, (2) tile-grid reader via eng.hdnrlfmyrj.jhzcxkveiw \u2014 shows 11x36 character grid with first-letter of entity names, (3) click_tile helper converting grid coords to screen pixels. Key script: test_bp35_l1.py takes action tokens (R, L, Cgx,gy) and prints grid after each step. This is the right approach for ARC-AGI-3 games when the MCP text grid is pixel-level rendering not game state.",
+    "category": "mechanic",
+    "turn": 128,
+    "level": -1,
+    "timestamp": "2026-04-13T22:29:45.641088"
+  },
+  {
+    "insight": "BP35 L2 SOLVED in 41 actions (baseline 72). Chain: R R C5,36 C5,35 C6,35 R C5,29 L C4,29 L C3,29 L C2,29 L C2,28 R R R C5,24 C5,23 L L C3,20 C3,17 C3,16 C4,16 R C5,16 R C6,16 R C7,16 R C8,16 R C8,15 C8,14 L L L C5,9. Key insight: col 3 at row 12 has spike; use col 8 breakable at rows 15,14 then walk left via row 11 into col 5 (gravity pulls player up), finally click (5,9) to break last breakable and fall onto gem at (5,7).",
+    "category": "strategy",
+    "turn": 128,
+    "level": 2,
+    "timestamp": "2026-04-13T22:43:14.745006"
+  },
+  {
+    "insight": "BP35 PROGRESS: 6 of 9 levels chain-verified (L1: 15, L2: 41, L3: 34, L4: 25, L5: 30, L6: 41 = 186 actions vs 233 baseline). L7-L9 remaining. L7 introduces new 'h' entity type (hzusueifitk, 5 cells) plus 'l' gravity-flip and 'o'/'y' toggle pairs. L7 structure has player in upper chamber, gem at (3,25) in lower chamber, walls separating. Requires gravity flip + navigation through toggle puzzle.",
+    "category": "observation",
+    "turn": 128,
+    "level": -1,
+    "timestamp": "2026-04-13T22:43:18.361888"
+  }
+]
