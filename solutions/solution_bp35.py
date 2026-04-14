@@ -88,6 +88,27 @@ SOLUTIONS = {
         'C4,16','C0,13','C4,14','C0,16','L','L','R',
         'C3,10','C0,8','R','C4,9','C0,11','C5,10','R','C5,10','C0,9','C6,9','R',
         'C6,9','C0,10','R','C7,8','C0,5','R','R','L','L','C0,22','L','L','L','L','C0,23'],
+
+    # L8: 64 actions (baseline 155) - introduces `e` 4-directional spreading breakable tile
+    # Key mechanic: click e destroys it AND spawns new e's in 4 cardinal neighbors (if empty).
+    # e is non-lethal (safe to adjacent-fall), so e blocks spike-rise death.
+    # Route: propagate e across row 28-30 to col 9 → rise col 9 (no spike at row 27) to (9,25) →
+    #        walk L through row 25 (toggle y@(7,25)) → rise to row 23 → toggle y@(3,22) →
+    #        rise col 3 via e@(3,18) ladder → cross row 10 east → flip gravity at (7,10) → fall col 8 → gem.
+    8: ['C2,29','C3,29','C4,29','C5,29','C6,29','C7,29','C5,30','C6,30','C7,30',
+        'R','R','R','R',
+        'C7,31','C7,30','C7,29',
+        'C8,29','R','C9,29','R',
+        'C9,28','C9,27','C9,26','C9,25',
+        'C8,25','L','C7,25',
+        'L','L','L','L','L','L',
+        'C3,22','C8,18',
+        'R',
+        'C3,18','C3,17','C3,16','C3,15','C3,14','C3,13','C3,12','C3,11','C3,10',
+        'C4,10','R','C5,10','R','C6,10','R','C7,10','R',
+        'C7,11','C5,2','C8,11','R',
+        'C8,12','C8,13','C8,14','C8,15','C8,16','C8,17',
+        'R'],
 }
 
 
