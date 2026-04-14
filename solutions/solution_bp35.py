@@ -79,6 +79,15 @@ SOLUTIONS = {
 
     # L6: 41 actions (baseline 48)
     6: ['R','R','R','R','R','C6,22','C6,25','C7,25','C4,31','L','L','R','R','L','L','C5,13','L','L','R','R','R','C8,1','L','L','C4,13','L','R','R','CB','L','L','R','R','R','R','L','L','L','L','L','L'],
+
+    # L7: 45 actions (baseline 86) - introduces `h` hazard (same as spike: lethal on fall, blocks on walk)
+    # Key: toggle-and-gravity cascade through upper chamber via col 5→6→7 alcove, then col 9 safe descent.
+    # Route: (4,15) stable grav-up → (2,8) upper chamber → col 3-6 pickthrough → (7,4) col 7 top →
+    #        (7,7) controlled descent → (9,7) alcove → (9,26) col-9 floor → (7,23) rise → (3,23) → gem (3,25).
+    7: ['C0,19','R','R','R','C6,19','C0,21','R','R','L','L','L','L',
+        'C4,16','C0,13','C4,14','C0,16','L','L','R',
+        'C3,10','C0,8','R','C4,9','C0,11','C5,10','R','C5,10','C0,9','C6,9','R',
+        'C6,9','C0,10','R','C7,8','C0,5','R','R','L','L','C0,22','L','L','L','L','C0,23'],
 }
 
 
