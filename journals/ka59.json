@@ -1,0 +1,114 @@
+[
+  {
+    "insight": "L1 solved with 15 actions. Win condition: dock BOTH E pieces into their respective frames (left and right). Sequence: 1) Move active E toward inactive E to push it across the f-divider onto the right side. 2) Click to swap active, then navigate right E into right target frame. 3) Click to swap back, then navigate left E into left frame. Key mechanics: ACTION1=UP, ACTION2=DOWN, ACTION3=LEFT, ACTION4=RIGHT (3px steps). ACTION6+click=swap active E. E pieces are 3x3 with center dot. Yellow frames are 5x5 with 3x3 interior. E fits inside frame interior. Pushing active E into inactive E sends inactive across the divider.",
+    "category": "mechanic",
+    "turn": 28,
+    "level": 1,
+    "timestamp": "2026-04-06T20:45:40.070670"
+  },
+  {
+    "insight": "CORRECTION: Docking E into left frame did NOT complete L1. Instead it caused a massive board transformation (3527 cells changed) revealing a much larger puzzle with multiple E pieces and frames. Levels completed stayed at 0. This may be phase 2 of L1 or the actual puzzle view. The initial view may have been a zoomed-in portion. Need to understand the true win condition.",
+    "category": "observation",
+    "turn": 28,
+    "level": 1,
+    "timestamp": "2026-04-06T20:46:01.454435"
+  },
+  {
+    "insight": "L1 SOLVED in 14 actions (baseline 39). Solution: R,R,R(push P2),R,CLICK_P2,U,R,CLICK_P1,L,L,L,L,L,D. Pieces: (9,21)\u2192(3,24) and (18,21)\u2192pushed to (33,21)\u2192(36,18). Frames at (2,23,5x5) and (35,17,5x5). Target: piece at (frame.x+1, frame.y+1). The 3rd RIGHT causes P1 at (15,21) to collide with P2 at (18,21), launching P2 to (33,21) across the divider. Then navigate each piece to its frame interior.",
+    "category": "strategy",
+    "turn": 28,
+    "level": 1,
+    "timestamp": "2026-04-06T20:57:57.823333"
+  },
+  {
+    "insight": "L2 has 4 pieces matched to 4 frames by size. P1(33,42,3x6)->Frame(8,8,5x8)=target(9,9). P2(42,45,6x6)->Frame(5,41,8x8)=target(6,42). P3(36,54,3x3)->Frame(50,50,5x5)=target(51,51). P4(39,33,6x3)->Frame(53,38,8x5)=target(54,39). Baseline=175. No enemies. Pieces must navigate using UDLR+push mechanics to reach their target frames across walls/dividers.",
+    "category": "observation",
+    "turn": 30,
+    "level": 2,
+    "timestamp": "2026-04-06T20:59:32.769067"
+  },
+  {
+    "insight": "L1 optimal solution: 11 actions (BFS found in 2236 iters). Path: R,R,R(push P2 to 33,21),L(P1 to 12,21\u2192but wall?),D,L,L,L,CLICK_P2,U,R. Key: dock P1 into left frame first (closer), then swap and dock P2. Baseline was 39.",
+    "category": "strategy",
+    "turn": 30,
+    "level": 1,
+    "timestamp": "2026-04-06T21:00:46.842952"
+  },
+  {
+    "insight": "L2 movement: each piece moves 3 units per UDLR. Active piece (33,42,3x6) can move freely UP/DOWN/LEFT/RIGHT by 3. Straight-line distances: P1(33,42)->target(9,9)=8L+11U=19moves. P2(36,54)->target(51,51)=5R+1U=6moves. P3(39,33)->target(54,39)=5R+2D=7moves. P4(42,45)->target(6,42)=12L+1U=13moves. Total straight=45 + 3clicks=48. Baseline=175 so ~3.6x overhead from routing/walls/pushes.",
+    "category": "strategy",
+    "turn": 41,
+    "level": 2,
+    "timestamp": "2026-04-06T21:07:11.780141"
+  },
+  {
+    "insight": "L2 divider structure: vertical divider at x\u224821-29 (f), horizontal divider at y\u224824-26 (f full width) + y\u224827-29 (f at x<30, walls '2' at x>=30). PUSH mechanics: pushes cross f-type dividers but are BLOCKED by 2-type walls. To push a piece UP across horizontal divider, the piece must be at x<30 (left side where divider is f-type). Pieces starting at x=33+ need to be pushed LEFT first. Multi-step push chain: push LEFT across vertical, then push UP across horizontal from the left side. This requires multiple helper pieces.",
+    "category": "mechanic",
+    "turn": 41,
+    "level": 2,
+    "timestamp": "2026-04-06T21:26:56.921251"
+  },
+  {
+    "insight": "L2 solving attempts: (1) BFS too slow \u2014 7k states at depth 5 after minutes. (2) Manual pushing works but pieces collide unintentionally. Need to track ALL piece collisions carefully. Key sequence: push P0 LEFT first (5 acts using P3), then need to push P0 UP from left side (requires getting a helper piece to left side below P0). P3 at (36,42) can be pushed LEFT but needs careful routing to avoid pushing P1(3x3). The 175-action baseline suggests ~40+ push/navigate actions per piece with complex chains. Consider: (a) IDA* with heuristic, (b) solving each quadrant transition separately, (c) trying simpler levels first (L5 baseline=21).",
+    "category": "strategy",
+    "turn": 41,
+    "level": 2,
+    "timestamp": "2026-04-06T21:32:04.420238"
+  },
+  {
+    "insight": "L5 has a corridor-based puzzle with wrap-around mechanics. Piece at (27,48) is trapped in a corridor between f-walls at x\u224821 and x\u224830. Moving UP from y=39 wraps to y=45. Only 9 positions reachable with UDLR. gobzaprasa sprites at (24,30,6x6) and (51,27,3x3) may be pushable blocks or teleporters. Frame target at (48,27) requires escaping the corridor. Need to understand gobzaprasa interaction mechanic.",
+    "category": "observation",
+    "turn": 41,
+    "level": 5,
+    "timestamp": "2026-04-06T21:45:29.383264"
+  },
+  {
+    "insight": "CRITICAL DISCOVERY: KA59 is Sokoban-style! Win requires BOTH: (1) all xlfuqjygey pieces docked in rktpmjcpkt frames AND (2) all nnckfubbhi enemy blocks pushed into ucjzrlvfkb enemy frames with 1-pixel border containment. L1 had no enemies (vacuously true). L3 has 2 enemies (9x9) at (45,15) and (15,30) needing to reach frames (14,14,11x11) and (29,29,11x11) \u2192 targets (15,15) and (30,30). Player pushes enemy blocks by walking into them. This changes the puzzle completely \u2014 need to include enemy positions in BFS state.",
+    "category": "mechanic",
+    "turn": 41,
+    "level": -1,
+    "timestamp": "2026-04-06T21:51:16.686045"
+  },
+  {
+    "insight": "BFS speed for KA59: deepcopy approach only 11 iter/sec for L3 (1 piece + 2 enemies). At baseline 86, need millions of iters \u2014 infeasible. Need pure-Python Sokoban simulator: parse board layout, implement piece movement + enemy push + wall collision + divider crossing + wrapping mechanics. This would be 100-1000x faster. Key state: (piece_positions, enemy_positions). Actions: UDLR. Push happens when piece moves into enemy block. Pieces dock into frames. Win = all pieces docked + all enemies in enemy frames.",
+    "category": "strategy",
+    "turn": 41,
+    "level": -1,
+    "timestamp": "2026-04-06T21:56:36.530138"
+  },
+  {
+    "insight": "L3 SOLVED in 33 actions (baseline 86). Solution: D R R R R D L D D L L L L L L D D L L L L L L L D R U U R R R R R. BFS with enemy state took 16818 iters, 19552 states. Deepcopy BFS at ~11 iter/sec took about 25 minutes \u2014 slow but feasible for simpler levels. The Sokoban push mechanics work: player pushes 9x9 enemy blocks into 11x11 frames while also docking itself.",
+    "category": "strategy",
+    "turn": 41,
+    "level": 3,
+    "timestamp": "2026-04-06T22:11:50.642565"
+  },
+  {
+    "insight": "L5 SOLVED in 20 actions (baseline 21). Solution: U\u00d712 R\u00d77 D\u00d71. The KEY hidden state is zhcrzgpwcp \u2014 a direction/momentum stored per sprite after wrapping. Without tracking it, only 10 states visible; with it, 167 states and the target is reachable. The wrap-and-momentum mechanic: piece wraps around corridor boundaries, gaining stored direction that changes subsequent movement physics. This enables escaping the corridor to reach the frame. Must include zhcrzgpwcp in ALL BFS state hashes for L2+.",
+    "category": "mechanic",
+    "turn": 41,
+    "level": 5,
+    "timestamp": "2026-04-06T22:18:20.842895"
+  },
+  {
+    "insight": "L4 BFS progress: depth 14, 58k states after 48 min at ~14 iter/sec. L4 has 2 pieces + 1 enemy block. Enemy at (15,45,9x9) needs to reach (30,3,9x9) \u2014 dx=+15, dy=-42, minimum ~19 pushes. With baseline 47, BFS might find solution around depth 20-30. Still running.",
+    "category": "observation",
+    "turn": 41,
+    "level": 4,
+    "timestamp": "2026-04-06T23:13:58.670258"
+  },
+  {
+    "insight": "L4 deepcopy BFS too slow: 92k states at depth 15 after 90 min. Won't reach depth 47. Need pure-Python sim for L4, L6, L7. L2 (175 baseline) even worse \u2014 needs fundamentally faster approach. Priority: build pure-Python KA59 Sokoban simulator for fast BFS. Parse level sprites, implement movement+push+wrap+momentum in pure Python. Expected 100-1000x speedup.",
+    "category": "strategy",
+    "turn": 41,
+    "level": 4,
+    "timestamp": "2026-04-06T23:55:07.521948"
+  },
+  {
+    "insight": "CRITICAL L4 mechanic: nnckfubbhi enemies can ONLY be pushed LEFT/RIGHT (horizontal), NOT UP/DOWN (vertical). When player moves DOWN into enemy, movement is BLOCKED (no push). When player moves UP into enemy, player passes through (no push). This means enemies cannot be directly pushed through the horizontal f-divider. Must find alternative: (1) chain of horizontal pushes that wrap, (2) some other mechanic to move enemies vertically, (3) the zhcrzgpwcp momentum might teleport enemies under specific conditions. The BFS should find the solution if one exists.",
+    "category": "mechanic",
+    "turn": 41,
+    "level": 4,
+    "timestamp": "2026-04-07T00:12:36.518388"
+  }
+]

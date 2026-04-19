@@ -1,0 +1,79 @@
+[
+  {
+    "insight": "Cross arm overlay is TEMPORARY \u2014 when a cross arm passes over a target block, the arm's pixels overwrite the target visually, but the target restores when the arm moves. Color 4 count fluctuates but returns to 64. Step counter is row 63 (color 15\u21921 from right).",
+    "category": "observation",
+    "turn": 9,
+    "level": -1,
+    "timestamp": "2026-04-09T14:54:21.630412"
+  },
+  {
+    "insight": "Win condition (cdjxpfqest): overlay cross sprites on reference template (pseflysmdl, all transparent), compare to background sprite (tag vzuwsebntu). Background has ~8-72 non-transparent pixels at target positions. Cross arms must cover targets with matching colors. Colors 4 and -1 excluded from check.",
+    "category": "mechanic",
+    "turn": 17,
+    "level": -1,
+    "timestamp": "2026-04-09T15:35:40.196824"
+  },
+  {
+    "insight": "2 crosses: 9-cross to (24,48), b-cross to (9,15). 20 actions. Analytical solve.",
+    "category": "summary",
+    "level": 1,
+    "turn": 17,
+    "timestamp": "2026-04-09T15:35:45.535160"
+  },
+  {
+    "insight": "Color swatches (tag ozhohpbjxz): 6x6 blocks at fixed positions containing specific colors. When a cross arm overlaps a swatch, the cross picks up that color. Must navigate through swatches to get the right color BEFORE positioning on targets. L4 swatches at: (4,4)=10, (4,54)=11, (28,4)=12, (28,54)=6, (52,4)=13, (52,54)=14. Each level has different swatch layouts.",
+    "category": "mechanic",
+    "turn": 17,
+    "level": -1,
+    "timestamp": "2026-04-09T15:47:05.001849"
+  },
+  {
+    "insight": "ACTION1=UP, ACTION2=DOWN, ACTION3=LEFT, ACTION4=RIGHT move the active crosshair's centroid by ~2.8 pixels per step. The rasterized sprite appears to \"extend\" in the direction of travel for 1-2 steps, then \"snaps\" to a translated position \u2014 this is a float-accumulator + raster-snap artifact, not two separate behaviors. Over 3 steps the visible shift is ~8 rows/cols. ACTION5 swaps the active crosshair (dot moves to the other cross); no time cost beyond 1 turn.",
+    "category": "mechanic",
+    "turn": 23,
+    "level": -1,
+    "timestamp": "2026-04-10T12:41:30.614904"
+  },
+  {
+    "insight": "The recipe 7\u00d7A1+4\u00d7A4+A5+6\u00d7A1+2\u00d7A3 (direct re-execution of memory's \"20-action solution\") does NOT win L1. On the final ACTION3, color 11 drops from 45\u21920 and colors 12 (c) + 13 (d) appear (47+38 cells) in a diagonal X-pattern around the dot \u2014 the b-cross TRANSFORMED into a different sprite type. Status after 20 actions: NOT_FINISHED, Levels completed: 0. Either the journal's recipe is obsolete, or the 20-action sequence is a prefix that transforms the b-cross and then more actions are needed to place the new X-shape on the targets.",
+    "category": "observation",
+    "turn": 23,
+    "level": 1,
+    "timestamp": "2026-04-10T12:41:35.820125"
+  },
+  {
+    "insight": "Sprites transform mid-level based on position. The L1 b-cross, after 6\u00d7UP+2\u00d7LEFT from start, became a diagonal X-shape composed of colors 12 and 13, and the puzzle targets correspondingly changed color (from 4b4/494 to 4d4/4c4). So the cross \"color\" is not fixed \u2014 arms that sweep through certain regions get recolored, and simultaneously the puzzle's target colors update to match. This is probably the core mechanic of RE86: you must find paths through \"swatches\" that give the cross the right color to satisfy the active set of targets.",
+    "category": "hypothesis",
+    "turn": 23,
+    "level": -1,
+    "timestamp": "2026-04-10T12:41:40.751228"
+  },
+  {
+    "insight": "L2 recipe (verified ~30 actions): X-shape (12) 10 DOWN+3 LEFT reaches (48,18); diamond (13) 6 UP+6 LEFT reaches (12,21); 9-cross (9) 2 DOWN+7 LEFT reaches (48,27). ACTION5 switch cycles active sprite. On reaching all 3 positions simultaneously, the level transitions \u2014 color 8 sprites appear for L3. Memory's target positions in project_re86_analysis.md L2 section are correct.",
+    "category": "strategy",
+    "turn": 61,
+    "level": 2,
+    "timestamp": "2026-04-10T13:27:45.011140"
+  },
+  {
+    "insight": "status() 'Levels completed' counter does NOT increment on level transitions in this game. It has stayed at 0 through L1\u2192L2 and L2\u2192L3 transitions. Use the BOARD TRANSITION (step counter reset to all f's, old sprite colors disappear, new colors appear) as the signal for level completion, NOT the levels_completed status. The State \"NOT_FINISHED\" only means the whole game isn't done.",
+    "category": "observation",
+    "turn": 61,
+    "level": -1,
+    "timestamp": "2026-04-10T13:27:48.483541"
+  },
+  {
+    "insight": "L3 line sprite (43x1) moves at ~1-3 rows per ACTION1 (inconsistent \u2014 centroid drift reports dy=-1.0 but visual snaps are bigger). MUCH slower than L2 cross sprites (2.8/step). Memory's \"14 moves\" estimate for L3 line to reach (6,27) from (45,30) is likely too optimistic \u2014 may need 20-40 actions just for the line. Line is still active from L3 start; use 1 LEFT + many UP to reach (6,27). Then ACTION5 switches. Diamond next, then X-shape. L3 TOTAL is probably 60-80 actions, not memory's 47.",
+    "category": "observation",
+    "turn": 70,
+    "level": 3,
+    "timestamp": "2026-04-10T13:35:38.251280"
+  },
+  {
+    "insight": "Session RE86 progress: L1 solved (20 actions), L2 solved (~31 actions). On L3 at turn 67. Line sprite moved partway up to ~(18, 30). Still need: line to (6,27), then switch, diamond (48,45)\u2192(30,18), switch, X-shape (48,18)\u2192(24,42). Each step burns heavy context due to 64x64 grid echo. Consider a solver script for L3+ rather than manual action grinding.",
+    "category": "strategy",
+    "turn": 70,
+    "level": -1,
+    "timestamp": "2026-04-10T13:35:42.288226"
+  }
+]

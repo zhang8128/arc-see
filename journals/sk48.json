@@ -1,0 +1,135 @@
+[
+  {
+    "insight": "L1 solution: UUURRRRLDDRLUR (14 actions, baseline 15). Scroll up to target row, push RIGHT to flank color blocks, pop LEFT to compact, cascade DOWN to merge rows, push RIGHT again.",
+    "category": "strategy",
+    "turn": 14,
+    "level": 1,
+    "timestamp": "2026-04-07T22:23:03.278728"
+  },
+  {
+    "insight": "L2 solution: RRRRUUULLURRDDRURLLURRLLURR (27 actions, baseline 32). Key: targets can be pushed by segments during cascade AND during R/L. Segments and targets can overlap. For perpendicular cascade (U/D), failed target push BLOCKS cascade. For parallel (R/L), segment overlaps target. All sprites in move-set move simultaneously.",
+    "category": "strategy",
+    "turn": 14,
+    "level": 2,
+    "timestamp": "2026-04-07T22:23:06.658221"
+  },
+  {
+    "insight": "Targets (elmjchdqcn) ARE pushable! During cascade/push, segments push targets at their current and destination positions. Boundary check applies to both segments and targets. When target push fails: parallel move = overlap, perpendicular = cascade blocked. All sprites move simultaneously (game uses opqqwmrfcn set).",
+    "category": "mechanic",
+    "turn": 14,
+    "level": -1,
+    "timestamp": "2026-04-07T22:23:09.933523"
+  },
+  {
+    "insight": "L3 solution: RRUUUURDDLDRRRRLLLLUUUURDDDLUUUUR (33 actions, baseline 35). Vertical segments at x=29 block horizontal target pushes. Targets can only be pushed vertically (U/D). Strategy: cascade above targets, push them down, rearrange, position segments.",
+    "category": "strategy",
+    "turn": 55,
+    "level": 3,
+    "timestamp": "2026-04-08T06:47:24.377553"
+  },
+  {
+    "insight": "L4 solution: RRUUUULLLLDRURDRURRDLLU (23 actions, baseline 113!). Two vertical rack pairs need targets. Horizontal rack pushes targets UP/horizontally into vertical rack positions. Vertical segments block horizontal pushes at BOTH current position AND destination. Key fix: check (tx,ty) AND (new_x,new_y) for vertical segment blocking.",
+    "category": "strategy",
+    "turn": 88,
+    "level": 4,
+    "timestamp": "2026-04-08T07:27:23.849494"
+  },
+  {
+    "insight": "L5 solution: LULLRRRRRURRDLLLLDDLDRRRRLURDRLUR (33 actions, baseline 304!). Wall/obstacle at (29,24) divides targets. Key: cascade to y=18 to bypass wall, push targets through x=29 at higher row. Must check obstacles for BOTH target pushes AND segment cascade destinations.",
+    "category": "strategy",
+    "turn": 111,
+    "level": 5,
+    "timestamp": "2026-04-08T07:42:47.955512"
+  },
+  {
+    "insight": "L6 SOLVED (36 actions, baseline 42). Solution: HD HR HR HR [switch V] VD VD VR VD VU VR VD VU VR VD [switch H] HR HR HR HL HL HL HL HD HD HR HU HL HU HR [switch V] VL VL VD VD VD. Key discovery: cross-rack segment blocking \u2014 segments from one rack prevent target pushes by the other rack at both source (pinning) and destination (blocking) positions.",
+    "category": "strategy",
+    "turn": 177,
+    "level": 6,
+    "timestamp": "2026-04-08T17:18:28.375561"
+  },
+  {
+    "insight": "Dual-rack puzzle: push 8s and 9s to correct rack scan lines. Cross-rack segment blocking is the key constraint. Solved in 36 actions (baseline 42).",
+    "category": "summary",
+    "level": 6,
+    "turn": 177,
+    "timestamp": "2026-04-08T17:18:33.516631"
+  },
+  {
+    "insight": "L7 SOLVED! 38 game actions (baseline 63). Solution: VD HR HR VR VD VD HR VD VD VD VU VU VU VU VL VU VL VL VD HL HL HL VD HU HR HR HR HR HR HR HL HL HL HL. With cage switches this is 38 steps. e at (17,20) serves both racks. V_BY=8, hry=20, vrx=17. A* found in 51M iterations (64 min).",
+    "category": "strategy",
+    "turn": 178,
+    "level": 7,
+    "timestamp": "2026-04-09T01:35:04.038767"
+  },
+  {
+    "insight": "Dual-rack puzzle with shared e-block. Push 5 blocks to fill 6 slots by positioning racks so H-rack and V-rack share e at intersection (17,20). Solved in 42 actions (baseline 63).",
+    "category": "summary",
+    "level": 7,
+    "turn": 178,
+    "timestamp": "2026-04-09T01:36:02.299331"
+  },
+  {
+    "insight": "SK48 GAME MECHANICS (L6+): CELL=6, H_RX=11, V_BY=8. H-rack at hry (default 26), V-rack at vrx (default 29). Actions: HR/HL=extend/shrink H, HU/HD=move H, VD/VU=extend/shrink V, VL/VR=move V. Click toggles cage6\u2194cage15. ACTION7=undo. Win condition (gvtmoopqgy): for each rack, finds blocks at scan segment positions, compares pixel[1,1] color against target cage's blocks. Blocks at intersection of both racks count for both. Cross-rack blocking: tiles on opposing rack segments can't be pushed. CRITICAL: abstract model uses single-point push (tat exact match) but GAME uses sweep-based push during VL/VR \u2014 all tiles between old and new vrx at V-rack y-positions get pushed. This causes model\u2194game divergence for complex solutions. Game-engine A* at ~40 states/sec is correct but slow.",
+    "category": "mechanic",
+    "turn": 178,
+    "level": -1,
+    "timestamp": "2026-04-09T06:42:44.671403"
+  },
+  {
+    "insight": "L7 SOLVED in 42 game actions (baseline 63). Solution abstract path: VD HR HR VR VD VD HR VD VD VD VU VU VU VU VL VU VL VL VD HL HL HL VD HU HR HR HR HR HR HR HL HL HL HL. Key trick: e-block at (17,20) intersection serves both H-rack (hry=20) and V-rack (vrx=17). Submission script: sk48_submit_v4.py handles L1-L7.",
+    "category": "strategy",
+    "turn": 178,
+    "level": 7,
+    "timestamp": "2026-04-09T06:42:58.303968"
+  },
+  {
+    "insight": "L8 UNSOLVED. Baseline 92. 4 blocks (no sharing needed): 9@(29,14), 14@(29,38), 8@(17,26), 12@(41,26). New color 12. Target H-rack at hry=26: 9@(11,26), 14@(17,26). hns\u22653. Target V-rack at vrx=29: 8@(29,14), 12@(29,20). vns\u22653. Click targets: cage6@(5,26) cage15@(29,2). Abstract A* (sk48_l8_astar.py) finds 26-step solution in 9s BUT game diverges due to sweep push mismatch. Game-engine A* (sk48_l8_engine_astar.py) reached d=44 in 37min but didn't solve \u2014 the block-swapping (9 from V\u2192H, 8 from H\u2192V) makes the actual path much longer. APPROACH: either (1) fix abstract model with sweep push in domv for VL/VR \u2014 check tiles at ALL positions between old/new vrx at each V-rack y, not just at exact segment position, or (2) run game-engine A* for 2+ hours, or (3) trace abstract solution step-by-step in game, find first divergence point, manually fix from there.",
+    "category": "strategy",
+    "turn": 178,
+    "level": 8,
+    "timestamp": "2026-04-09T06:43:21.825814"
+  },
+  {
+    "insight": "L8 SOLVED! 36 game actions (baseline 92). Abstract path: VD HR HR HR HL VD VR VD VL VD VD VD VU VU VU HR HR HR HR HR HL HL VU HL VD HL VU. Key fix: H-rack starts with hns=0 (no segments), V-rack starts with vns=1. The old model assumed hns=1, causing the first HR to incorrectly push targets. With hns=0, the first HR creates a segment without pushing (empty segment list \u2192 no domv iteration). Submit script: sk48_submit_v4.py handles all 8 levels, 244 total actions.",
+    "category": "strategy",
+    "turn": 178,
+    "level": 8,
+    "timestamp": "2026-04-09T07:12:05.822174"
+  },
+  {
+    "insight": "AR25 MECHANICS (verified for L1-L2, hypothesized for L3+):\n\n**Grid**: 21x21 game coords, displayed at 3x = 63x63 + step counter row 63.\n\n**Two pieces** (both may be color 5 on later levels). Active piece has `sys_click` tag. Passive piece mirrors.\n\n**Divider**: orientation varies per level. L1-L2: vertical (x=10, x=12). L3: horizontal (y=16). The divider axis determines the mirror axis.\n\n**Movement modes** (A5 toggles, costs 1 step):\n- Mode 1 (both-mode): UDLR controls active piece directly, passive mirrors across divider axis. Step=1.\n- Mode 0 (piece-mode): Only passive piece moves. L/R by 2 (or U/D by 2 if horizontal divider?). Perpendicular movement blocked.\n\n**Starting mode**: L1=mode 1 only (A5 is no-op). L2=mode 0. Varies per level.\n\n**Win condition**: Target cells (color 11, vrfjzqaker sprites) must be covered by pieces. L3+ has 4 target groups (2 per piece).\n\n**L1**: 15 actions = 10D+5L. Both-mode only.\n**L2**: 11 actions = 2L+A5+8D. Piece-mode then both-mode.\n\n**State space**: ~O(20^4 \u00d7 2) with mode \u00d7 4 offsets. BFS is fast for abstract model.\n\n**Key gotcha**: `get_pixels()` does NOT capture mode state \u2014 must use `obs.frame[-1]` for state hashing in game-engine BFS.",
+    "category": "mechanic",
+    "turn": 178,
+    "level": -1,
+    "timestamp": "2026-04-09T07:41:08.967044"
+  },
+  {
+    "insight": "AR25 SOLVED L1-L4 (97 actions total). Solutions: L1=15(DDDDDDDDDDLLLLL), L2=11(LL5DDDDDDDD), L3=41(5+12L+5D+5+7R+7D+5+7U), L4=30(5+7R+5+7R+7U+5+6D). Baselines: 17,22,103,29.\n\nL3+ mechanics: A5 cycles through controllable objects (dividers + pieces). Each moves independently by 1/step. Win requires covering ALL target cells: pieces placed at one position + their REFLECTIONS across divider(s) cover matching targets on the other side. Reflection axis = center between upper/lower target groups.\n\nL5 has TWO dividers (horizontal y=5 + vertical x=3) and ONE piece (11 cells, 5x5). Creates 4 reflected copies total. L6-8 likely even more complex.\n\nKey optimization: find which target group each piece covers, compute Manhattan distance, sweep divider positions to find minimum needed.",
+    "category": "strategy",
+    "turn": 178,
+    "level": -1,
+    "timestamp": "2026-04-09T08:04:02.028306"
+  },
+  {
+    "insight": "AR25 L1-L6 SOLVED (178 actions, baselines 359). L7-L8 unsolved \u2014 reflection formula mismatch. The 180\u00b0 rotation AND 4-fold reflection formulas both produce extra cells outside targets for L7. The game's actual rendering doesn't match simple geometric reflection. L7 has 2 large pieces (14+9 cells) and 42 targets. May need to observe rendering directly to determine exact transformation. Game-engine BFS too slow (deepcopy bottleneck at ~20 states/sec). Need either: (1) understand exact reflection formula from game rendering, (2) use faster state representation, or (3) play interactively to observe visual feedback.",
+    "category": "strategy",
+    "turn": 178,
+    "level": 7,
+    "timestamp": "2026-04-09T09:50:49.552619"
+  },
+  {
+    "insight": "AR25 ALL 8 LEVELS SOLVED (262 total actions, baselines 577). L7: 37 actions (DD5RRRRRRRRR5RRRUUUUUU5LLUUUUUUUUUUUU), L8: 47 actions (DDDDDD5RRRRRRRRR5RRRRRRRRRUUUU5LLLLLLLLLUUUUUUU). Key discovery: original piece DOES count for target coverage (4-copy model = original + H-reflect + V-reflect + 180\u00b0 rotation). Dividers at target center (v,h). Submit script: ar25_submit.py.",
+    "category": "strategy",
+    "turn": 178,
+    "level": -1,
+    "timestamp": "2026-04-09T12:04:12.024696"
+  },
+  {
+    "insight": "4-fold reflection puzzle: 2 pieces + 2 dividers, move to cover 60 targets. h=11 v=12. Solved in 47 actions (baseline 66).",
+    "category": "summary",
+    "level": 8,
+    "turn": 178,
+    "timestamp": "2026-04-09T12:04:13.452487"
+  }
+]

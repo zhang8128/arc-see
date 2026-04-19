@@ -1,0 +1,191 @@
+[
+  {
+    "insight": "Single-arm puzzle. Click 3 hidden targets: A\u2192hip\u2192B. Solved 3 clicks.",
+    "category": "summary",
+    "level": 1,
+    "turn": 4,
+    "timestamp": "2026-04-11T18:59:53.632148"
+  },
+  {
+    "insight": "Two-arm puzzle with a-blob walls. 5-click game-over budget. Open \u2014 previous 500K brute-force failed.",
+    "category": "summary",
+    "level": 2,
+    "turn": 4,
+    "timestamp": "2026-04-11T18:59:54.770877"
+  },
+  {
+    "insight": "Session.levels_completed was broken until 2026-04-11 \u2014 it only updated on GameState.WIN. Real progress comes from obs.levels_completed even while state=NOT_FINISHED. Fixed in session.py. If status() shows 0 but you've made L1 clicks, trust frame changes, not the counter.",
+    "category": "observation",
+    "turn": 4,
+    "level": -1,
+    "timestamp": "2026-04-11T19:00:04.459535"
+  },
+  {
+    "insight": "L1 solved in 3 clicks: [(36,13), (26,61), (42,30)]. Pattern A-hip-B with head. obs.levels_completed ticks to 1 but state stays NOT_FINISHED (only flips to WIN on all 6 done).",
+    "category": "strategy",
+    "turn": 4,
+    "level": 1,
+    "timestamp": "2026-04-11T19:00:05.633157"
+  },
+  {
+    "insight": "L2 has two arms: color-6-inside-c-diamond (arm 2, upper) and color-6-inside-f-diamond (arm 1, lower). Click (10,10) moved only arm 2 head by about 1 cell, arm 1 did not move. Hypothesis: click selects arm by proximity.",
+    "category": "hypothesis",
+    "turn": 4,
+    "level": 2,
+    "timestamp": "2026-04-11T19:00:06.777771"
+  },
+  {
+    "insight": "CRITICAL: env.reset() leaks state on R11L. After playing L2 and resetting once, arm1 saturates to (31,14) on most clicks instead of staying at initial (24,12). Fix: call env.reset() TWICE per trial. ALL previous probes (500K+) used single reset and got WRONG results. The correct L2 behavior: 57% of clicks are no-ops for arm1.",
+    "category": "mechanic",
+    "turn": 4,
+    "level": -1,
+    "timestamp": "2026-04-11T23:06:02.672431"
+  },
+  {
+    "insight": "L2 TRUE arm1 behavior (double-reset verified): 112 distinct foot positions at 4px. Most clicks (145/256) leave arm1 at initial (24,12). Only clicks in upper-left region (roughly x=0-60, y=0-36) move arm1. The isolated cluster (33,30) IS still reachable via click (44,60). The hole cell (36,20) via click (52,32). Previous arm1 saturate-to-(31,14) was a reset-leak artifact.",
+    "category": "mechanic",
+    "turn": 4,
+    "level": 2,
+    "timestamp": "2026-04-11T23:06:06.355454"
+  },
+  {
+    "insight": "L2 c-diamond at (40,51) tested with all 221 arm1 positions (single-reset, possibly WRONG). 0 wins. NEEDS RE-VERIFICATION with double-reset. The single-reset result may be invalid since arm1 was in corrupted state for most trials.",
+    "category": "observation",
+    "turn": 4,
+    "level": 2,
+    "timestamp": "2026-04-11T23:06:08.480651"
+  },
+  {
+    "insight": "L2 c-diamond (40,51) CONFIRMED not the win target even with double-reset. Tested all 112 arm1 \u00d7 arm2@(40,51) combos: 0 wins. Also confirmed: some B values are REJECTED (arm2 stays at initial 49,41) \u2014 specifically when B is near hips or out of the valid arm2 region. The valid arm2 foot region is constrained.",
+    "category": "observation",
+    "turn": 4,
+    "level": 2,
+    "timestamp": "2026-04-11T23:08:09.969506"
+  },
+  {
+    "insight": "L2 arm1 foot formula (double-reset verified): foot \u2248 (click + (57, 30)) / 3, integer-rounded. Max residual ~0.4px. This is a THIRD-point formula (not midpoint like arm2). To compute click for desired arm1 target T: click = 3*T - (57, 30). Verified: target (33,30) needs click (42,60); target (36,20) needs click (51,30).",
+    "category": "mechanic",
+    "turn": 4,
+    "level": 2,
+    "timestamp": "2026-04-11T23:10:03.692823"
+  },
+  {
+    "insight": "L2 arm2 B-click rejection map (double-reset, hip=45,35): large accepted region roughly x=[8,52] y=[2,62] with 2 features: (1) hip rejection holes at (44-46, 34-36) and (52-56, 46) matching the two arm2 hip positions, (2) ISOLATED accepted region at x=[0,4] y=[20,26] disconnected from main blob. Isolated region tested with multiple arm1 combos at 1px: 0 wins. Pattern mirrors L1 hidden targets but no win yet.",
+    "category": "observation",
+    "turn": 4,
+    "level": 2,
+    "timestamp": "2026-04-11T23:14:23.953438"
+  },
+  {
+    "insight": "Deepcopy from double-reset state is SAFE and ~1.4x faster than double-reset per trial. Pattern: env.reset(); env.reset(); play L1; snap = copy.deepcopy(env._game). Then per trial: env._game = copy.deepcopy(snap); play L2. Verified: all 6 test clicks produce identical sixes to double-reset method. Previous deepcopy bug was because snapshot was taken from single-reset (leaked) state.",
+    "category": "mechanic",
+    "turn": 4,
+    "level": -1,
+    "timestamp": "2026-04-11T23:28:49.736675"
+  },
+  {
+    "insight": "L2 color 12 analysis: color 12 marks arm1 head (1 cell at 17,6), arm1 foot ring (20 cells at 24,12), BOTH arm1 hips (1 cell each at 49,9 and 8,21), AND the c-diamond goal (12 cells at 37-43,48-54). The c-diamond is structurally ARM1 color, not arm2. However arm1 foot formula cannot reach c-diamond (requires click y=123, out of bounds). Arm1 might reach it via hip-modified formula \u2014 test running.",
+    "category": "observation",
+    "turn": 4,
+    "level": 2,
+    "timestamp": "2026-04-11T23:28:54.687767"
+  },
+  {
+    "insight": "Combined search running at /tmp/r11l_combined.log with direct file output + deepcopy. Phase 1: arm1 via (A, (8,21), B) at 4px \u2014 maps 65K trials. 0 wins through ax=24 (6/16 done). Phase 2: 3-click (A, hip, B) at 4px all 4 hips \u2014 262K trials. Both use correct deepcopy-from-double-reset. Check for WIN! lines.",
+    "category": "observation",
+    "turn": 4,
+    "level": 2,
+    "timestamp": "2026-04-11T23:32:34.758063"
+  },
+  {
+    "insight": "L5 SOLVED in 14 actions (budget 37). Paint puzzle: bodies absorb obstacle colors during foot animation. yukft: 3 moves on foot[1] \u2014 absorb pgkne(9), pyzud(8), reach hand. yukft-2: 6 moves across feet[2,3,4] \u2014 absorb ttyia(11), zjgrp(14), reach hand. Key: body pos = centroid of feet, 1 move shifts body by ~1/3 of foot displacement. Wall is 76x76 border sprite; extract pixel mask for fast checking.",
+    "category": "mechanic",
+    "turn": 0,
+    "level": 5,
+    "timestamp": "2026-04-12T11:39:55.178347"
+  },
+  {
+    "insight": "L5 solution clicks (from L5 start): yukft: select foot[1](43,34), move(9,39), move(50,7), move(11,18). yukft-2: select foot[2](41,47), move(48,36), select foot[3](34,55), move(58,44), move(10,54), select foot[4](52,55), move(10,58), move(50,6), select foot[3](8,52), move(48,2). Total: 14 actions.",
+    "category": "strategy",
+    "turn": 0,
+    "level": 5,
+    "timestamp": "2026-04-12T11:39:57.426802"
+  },
+  {
+    "insight": "L6 is a paint puzzle with 9 obstacles (3 per body + 3 unused). yukft (2 feet at 47,41 and 48,55): absorb colors {10,11,6} from (23,53),(30,42),(43,28), reach hand at (8,52). yukft-2 (3 feet at 2,17/9,9/20,17): absorb colors {9,14,15} from (9,31),(32,15),(14,43), reach hand at (48,9). Danger obstacles: colors {8,12,13} at (37,4),(36,55),(54,21). Bodies must NOT absorb wrong obstacles (exact color match required for win).",
+    "category": "mechanic",
+    "turn": 0,
+    "level": 6,
+    "timestamp": "2026-04-12T11:45:54.392199"
+  },
+  {
+    "insight": "L6 nearly solved: yukft works (5 clicks, all 3 absorptions + hand match). yukft-2 absorbs 2/3 (misses zjgrp). Issue: foot pixel count differs between solver mask (13px) and game engine (21px), causing wall collision mismatch. Fix: use game engine verification for each move, or use `collides_with` directly for precomputation. Total budget used: ~12 clicks vs 45 allowed.",
+    "category": "observation",
+    "turn": 0,
+    "level": 6,
+    "timestamp": "2026-04-12T11:57:25.630865"
+  },
+  {
+    "insight": "L6 SOLVED in 14 actions (budget 45). Execute yukft-2 first (feet 0,1,2), then yukft (feet 3,4) to avoid cross-body foot overlap on clicks. yukft: 5 clicks (4 moves). yukft-2: 7 clicks (4 moves). Both bodies: 3 obstacle absorptions + hand match each.",
+    "category": "strategy",
+    "turn": 0,
+    "level": 6,
+    "timestamp": "2026-04-12T12:18:59.825791"
+  },
+  {
+    "insight": "R11L ALL 6 LEVELS SOLVED. Total ~67 actions vs 167 baseline (60% reduction). L1: 3 clicks. L2-L4: solve_r11l_v2.py (meet-in-the-middle). L5: 14 actions (probe_r11l_l5_fast2.py). L6: 14 actions (probe_r11l_l6_fix.py, execute y2 first then yukft). Key files: solve_r11l_v2.py, probe_r11l_l5_fast2.py, probe_r11l_l6_fix.py. L5 clicks from L5 start: [(43,34),(9,39),(50,7),(11,18),(41,47),(48,36),(34,55),(58,44),(10,54),(52,55),(10,58),(50,6),(10,54),(48,2)]. Game is 21/25 solved.",
+    "category": "strategy",
+    "turn": 0,
+    "level": -1,
+    "timestamp": "2026-04-12T12:21:16.316963"
+  },
+  {
+    "insight": "S5I5 is a VECTOR DISPLACEMENT PUZZLE. Each level has pieces (gdgcpukdrl diamonds), markers (zylvdxoiuq dots), targets (cpdhnkdobh diamonds), and bars (agujdcrunq structural elements). Clicking a piece zone applies a displacement vector (+3 or -3) to a marker along one axis. The bars track marker position and constrain movement range. WIN = all markers reach their target positions. The color 6 dot and color 1 diagonal arm are visual representations derived from marker positions. Each click costs 1 step from a budget (okmxyzxpez.current_steps). Game state is fully determined by marker positions on their bars.",
+    "category": "mechanic",
+    "turn": 4,
+    "level": -1,
+    "timestamp": "2026-04-12T21:44:44.399160"
+  },
+  {
+    "insight": "L1 has 2 pieces controlling 2 independent markers. Vertical piece pdzhitfvow: upper half = marker y-3, lower half = marker y+3. Horizontal piece bnbtbmhoct: left half = marker x-3, right half = marker x+3. Vertical marker starts at y=33, target at y=51 (need 6 downs). Horizontal marker starts at x=30, target at x=51 (need 7 rights). Minimum = 13 clicks. BFS confirmed.",
+    "category": "mechanic",
+    "turn": 4,
+    "level": 1,
+    "timestamp": "2026-04-12T21:44:46.901390"
+  },
+  {
+    "insight": "KEY SOLVER INSIGHT: This is solvable analytically, not BFS. Each click action is a vector (dx, dy) applied to marker position. Find non-negative integer coefficients for click-vectors that sum to (target - start). This is integer linear programming / coin-change in 2D. When markers are independent (L1), it decomposes to per-axis problems. When multiple pieces affect the same marker (L2+), need to solve the coupled system. L2 has 4 pieces, 1 marker, 8 actions but only right-half clicks work (left-half = no-op when marker at bar minimum).",
+    "category": "strategy",
+    "turn": 4,
+    "level": -1,
+    "timestamp": "2026-04-12T21:44:50.372189"
+  },
+  {
+    "insight": "CRITICAL: Click displacement vectors are NOT constant. Each piece is associated with a specific bar, and the marker can only move within that bar's range. When the marker reaches a bar boundary, further clicks on that piece are no-ops. Different pieces can push the marker past other pieces' boundaries because they use different bars. This means: (1) analytical/abstract BFS with constant vectors is WRONG, (2) deepcopy BFS or engine-based simulation is needed, (3) the full pixel scan for click discovery is still valid per-level (done once from initial state), but some clicks become no-ops as marker approaches bar boundaries.",
+    "category": "mechanic",
+    "turn": 4,
+    "level": -1,
+    "timestamp": "2026-04-12T21:52:17.612393"
+  },
+  {
+    "insight": "L7 BLOCKER: target (24,15) not reachable from initial state. BFS exhausted 207K states (full state key) and 1402 states (marker-only key). The marker x-coordinate can only decrease to 42 with discovered clicks, but target needs x=24. New click positions appear at intermediate states but merged discovery from 6 intermediate states only found 1 extra click. Need systematic per-state click re-discovery or a completely different approach. L7 has 2 markers but second is already at target \u2014 only first marker needs to move \u0394x=-30.",
+    "category": "observation",
+    "turn": 4,
+    "level": 7,
+    "timestamp": "2026-04-12T23:26:38.396028"
+  },
+  {
+    "insight": "L7 SOLVED CONCEPTUALLY. The # bars form walls with gaps. The cc/marker bar must navigate AROUND the walls: (1) move down to below the horizontal wall at row 29, (2) extend LEFT through the gap where the vertical wall at column 39 doesn't exist (rows 30+), (3) move back UP to y=15. Key clicks: sn-R moves marker down, ix-R shifts stack down, xx-R extends bar left, sn-L/ix-L move back up. The wall gap at columns 42+ allows vertical passage through the horizontal bar. No wall at column 39 below row 29.",
+    "category": "strategy",
+    "turn": 4,
+    "level": 7,
+    "timestamp": "2026-04-13T12:19:49.025264"
+  },
+  {
+    "insight": "L7 wall structure: Vertical wall at columns 39-41 (rows 0-29 only \u2014 NOT below horizontal bar). Horizontal wall at rows 27-29 with gaps at columns 6-8 and 30-32. Below row 29, no wall at column 39. Second vertical wall at columns 15-17 (rows 30-44). The cc bar can extend freely below row 29 (reached x=18 at y=42). Bar shrinking IS possible: click(24,56) = xx-L shrinks bar by 3 (only works when bar is extended). The fundamental constraint: to reach the upper-left quadrant, must fit through the 3-pixel gap at columns 30-32 in the horizontal wall. Bar must be width 3 to fit. Single-cycle qu-L pumping yields only x-3 per complete reset. Need multi-level chain pumping or a path I haven't discovered.",
+    "category": "observation",
+    "turn": 4,
+    "level": 7,
+    "timestamp": "2026-04-13T12:27:03.212801"
+  }
+]

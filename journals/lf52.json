@@ -1,0 +1,401 @@
+[
+  {
+    "insight": "Mechanic: `e` cells are the player (color 14). Clicking a filled eeee block selects it (3-border). Clicking a hollow 1111 block slides the selected block toward it, merging with any filled blocks in between into a single block at destination. Keyboard ACTION1-4 are useless (just tally row 0).",
+    "category": "mechanic",
+    "turn": 7,
+    "level": -1,
+    "timestamp": "2026-04-14T07:35:36.531330"
+  },
+  {
+    "insight": "L1 solved in 8 clicks (baseline 24). Sequence: click filled block to select, click its hint (1221 pattern) to execute slide-merge. Each merge = 2 clicks. Slide consumes contiguous filled blocks in direction of hint, lands at first hollow. Continue merging until all pieces funnel through sub-panels.",
+    "category": "strategy",
+    "turn": 13,
+    "level": 1,
+    "timestamp": "2026-04-14T07:39:52.743950"
+  },
+  {
+    "insight": "ACTION7 = UNDO (reverses last action). ACTION1-4 are useless tallies. ACTION6(x,y) = click. Slide semantics: click filled block selects it with 3-border; hint (1221 pattern) appears at the destination = first hollow block past a contiguous filled chain in the direction of another filled block. Clicking the hint executes the slide. If slide would go to wrong location, game shows `f`-key-shape failure state (UNDO to recover).",
+    "category": "mechanic",
+    "turn": 21,
+    "level": -1,
+    "timestamp": "2026-04-14T07:46:37.280707"
+  },
+  {
+    "insight": "Main panel + transition panel (bccccb) + sub-panel NOT column-connected. Row B consolidation gets stuck at B[5]+B[6]. Needs different routing (right-first? transition-panel funnel?). Use ACTION7 to undo dead-ends.",
+    "category": "summary",
+    "level": 2,
+    "turn": 22,
+    "timestamp": "2026-04-14T07:47:30.126381"
+  },
+  {
+    "insight": "DIRECTION RULE CONFIRMED: clicking top/left END of a chain slides it AWAY from click (down/right). Clicking bottom/right END slides UP/LEFT. Only one piece shows 3-border (the clicked one), NOT entire chain. Chain absorbs any contiguous filled pieces along slide path, merging to 1 piece at destination.",
+    "category": "mechanic",
+    "turn": 58,
+    "level": -1,
+    "timestamp": "2026-04-14T08:30:25.671713"
+  },
+  {
+    "insight": "EXECUTION VALIDATION: slide only SUCCEEDS if hint destination has \"another filled\" past it (in slide direction OR in same column/row beyond destination). If no validation, clicking hint triggers FAILURE animation (1683 cells change, f-key appears at rows 30-63, pieces respawn/transform).",
+    "category": "mechanic",
+    "turn": 58,
+    "level": -1,
+    "timestamp": "2026-04-14T08:30:28.295627"
+  },
+  {
+    "insight": "GENRE IDENTIFIED: LF52 is PEG SOLITAIRE. Click source peg \u2192 jumps over adjacent peg \u2192 lands 2 slots away \u2192 captured peg removed (piece count drops by 1). Valid jump requires: (1) source peg, (2) peg at adjacent position to jump over, (3) empty landing 2 slots from source, (4) the unusual \"progress constraint\" \u2014 another peg must exist past the landing (game-specific rule). Hint `1221` shows landing position. Bidirectional: click top/left end of chain slides down/right; click bottom/right slides up/left. Goal likely: reduce to 1 peg at specific target.",
+    "category": "mechanic",
+    "turn": 83,
+    "level": -1,
+    "timestamp": "2026-04-14T08:55:25.460649"
+  },
+  {
+    "insight": "F-KEY IS ROLLBACK/UNDO: When an invalid slide is executed (e.g., chain with no \"another peg\" past destination), the game converts pegs to `1221/2222` faded patterns and shows the f-key shape. Clicking ANY part of the f-key (body `f`, hole `..`, or border) RESTORES the original state of the level. This is effectively a SOFT UNDO mechanism \u2014 you can probe invalid moves to study their effects, then click f-key to revert. Different invalid slides produce f-keys at DIFFERENT positions (which might indicate what the mistake was).",
+    "category": "mechanic",
+    "turn": 91,
+    "level": -1,
+    "timestamp": "2026-04-14T09:14:06.472306"
+  },
+  {
+    "insight": "L1 SOLVED. Initial: B[1], B[2], B[4], C[5], subB[1]. Route: (1) B[1]+B[2]\u2192B[3] (click B[1] x=18,y=19; click hint x=30,y=19). (2) B[3]+B[4]\u2192B[5] (click B[3]; click hint x=42,y=19). (3) B[5]+C[5]\u2192subA[1] (click B[5]; click hint x=42,y=31). (4) subA[1]+subB[1]\u2192subC[1] (click subA[1] x=42,y=31; click hint x=42,y=43). 8 clicks total, baseline 24.",
+    "category": "strategy",
+    "turn": 115,
+    "level": 1,
+    "timestamp": "2026-04-14T09:35:43.965192"
+  },
+  {
+    "insight": "Peg-solitaire slide-merge. 5 pieces \u2192 1 via 4 merges, 8 clicks. Slides merge contiguous chain into first hollow past, absorbing pieces along path. Sub-panel cross-connection via col 5\u2194sub col 1.",
+    "category": "summary",
+    "level": 1,
+    "turn": 115,
+    "timestamp": "2026-04-14T09:35:54.506896"
+  },
+  {
+    "insight": "L2 layout: Main panel 3 rows \u00d7 7 cols, row B has 4 pieces at cols 1,2,4,6. Sub panel bottom-right (cols 42-53), only col 6 main \u2194 col 0 sub aligned (1 piece visible). Transition panel middle-center with `bbbbbb/bccccb` (color 11=b, color 12=c) \u2014 new mechanic colors. Baseline 81.",
+    "category": "observation",
+    "turn": 116,
+    "level": 2,
+    "timestamp": "2026-04-14T09:36:56.947521"
+  },
+  {
+    "insight": "L1 click coords verified: B[1]=(18,19), B[3] center=(30,19), B[5]=(42,19), C[5]=(42,25), subB[1]=(42,37), subA[1]=(42,31), subC[1]=(42,43). Same col=42 for all col-5/sub-1 cells.",
+    "category": "mechanic",
+    "turn": 116,
+    "level": -1,
+    "timestamp": "2026-04-14T09:36:59.431437"
+  },
+  {
+    "insight": "L2 first merge succeeded: B[1]+B[2]\u2192B[3] via click B[1](14,16) and hint B[3](26,16). Same peg-solitaire mechanics as L1. Key L2 insight: the 2\u21921 final slide DOES succeed (not fail as prior session assumed) \u2014 panel border provides validation OR the rule is different than theorized. State after: {B[3], B[4], B[6], sub-piece}.",
+    "category": "strategy",
+    "turn": 117,
+    "level": 2,
+    "timestamp": "2026-04-14T09:37:16.470020"
+  },
+  {
+    "insight": "MAJOR CORRECTION: Prior session mistakenly labeled the 5-piece puzzle (B[1], B[2], B[4], C[5], subB[1]) as L2 when it was L1. The final \"dead-end\" subA[1]+subB[1]\u2192subC[1] is actually VALID \u2014 clicking the hint triggers the last merge and advances to L2. Always verify current level via status.levels_completed before theorizing.",
+    "category": "observation",
+    "turn": 117,
+    "level": -1,
+    "timestamp": "2026-04-14T09:37:19.462323"
+  },
+  {
+    "insight": "L2 standard merge route dead-ends: B[1]+B[2]\u2192B[3], B[3]+B[4]\u2192B[5], then {B[5], B[6], sub-piece}. B[5] click tallies (no valid slide in either direction). B[6] click gives hint at B[4] but slide INVALID\u2192f-key. The sub-panel corridor through cols 56-57 visible but doesn't connect via simple slide. Need alternative routing \u2014 maybe use B[4] or B[6] as single-piece movers first, or route through corridor/transition panel mechanics.",
+    "category": "observation",
+    "turn": 123,
+    "level": 2,
+    "timestamp": "2026-04-14T09:42:19.742276"
+  },
+  {
+    "insight": "L2 f-key RESET is full level restore (NOT step undo). Clicking f-key hole at (6,56) restores to initial L2 state (all 5 pieces). Use ACTION7 for single-step undo instead.",
+    "category": "mechanic",
+    "turn": 123,
+    "level": 2,
+    "timestamp": "2026-04-14T09:42:22.507195"
+  },
+  {
+    "insight": "L2 alternative route attempt: B[1]+B[2]\u2192B[3], then B[6]\u2192B[5] (single move), then {B[3]+B[4]+B[5]}\u2192B[6] (triple merge, validated by subB[0] in col 6), then B[6]\u2192C[6], C[6]\u2192subA[0]. Ends at {subA[0], subB[0]}. But sub panel has ONLY 2 rows (A and B), not 4 like L1. So final subA[0]+subB[0] merge impossible (no subC[0]). Need to either: (a) use corridor mechanic at cols 56-57, (b) interact with transition panel b/c colors, or (c) find different route that lands final piece somewhere valid.",
+    "category": "hypothesis",
+    "turn": 123,
+    "level": 2,
+    "timestamp": "2026-04-14T09:43:28.017940"
+  },
+  {
+    "insight": "L2 selection rule: A piece is selectable ONLY IF it has an adjacent filled neighbor (direct adjacency, not same col/row). B[4] isolated in initial state cannot be selected. After B[1]+B[2]\u2192B[3] merge, B[3]+B[4] become adjacent pair. Key implication: to manipulate isolated pieces (B[4], B[6], subB[0]), must first create adjacency via intermediate slides.",
+    "category": "mechanic",
+    "turn": 131,
+    "level": -1,
+    "timestamp": "2026-04-14T09:54:00.152566"
+  },
+  {
+    "insight": "L2 BREAKTHROUGH: ACTION3=MOVE TRANSITION PANEL LEFT (6 cols per press), ACTION4=MOVE RIGHT. ACTION1/2 blocked (vertical movement disabled in L2 \u2014 walls above and below trap transition panel to horizontal movement only). The transition panel (color 12 c-interior + color 11 b-border) is a MOBILE VALIDATOR/PLAYER. By repositioning it under different main panel columns, it can presumably validate slides in new columns. Initial position: cols 31-34 (main col 4). Each ACTION3/4 shifts by exactly 6 cols (one cell-width with separator).",
+    "category": "mechanic",
+    "turn": 136,
+    "level": 2,
+    "timestamp": "2026-04-14T09:56:11.586866"
+  },
+  {
+    "insight": "L2 SOLUTION HYPOTHESIS: Baseline 81 actions makes sense now \u2014 L2 combines (a) e-piece slides/merges for building chains, (b) transition panel repositioning via ACTION3/4 to enable validation in specific columns. Dead-end {B[5], B[6], sub} may be escapable by moving transition under col 5 or 6 to validate a downward slide. Next session should: (1) execute standard 2 merges, (2) ACTION4 x 1-2 to shift transition right under col 5 or 6, (3) click B[5]/B[6] to see if new valid hints appear. Then navigate down col 6 to reach subB[0]. Workflow: merge in row B, move transition, verify new slides, repeat.",
+    "category": "strategy",
+    "turn": 136,
+    "level": 2,
+    "timestamp": "2026-04-14T09:56:16.556341"
+  },
+  {
+    "insight": "L2 PARTIAL: Transition panel repositioning does NOT directly enable B[5]/B[6] slides in state {B[5], B[6], sub}. Even with transition c-cells under col 5 (cols 37-40), B[5] click still tallies. The validation mechanism is more subtle. Possible: (a) transition needs to be in specific cell ABOVE the piece; (b) transition panel is separate puzzle (reach goal location); (c) pieces interact with transition via a different trigger like DOWN slide. Next hypothesis: solve may be done by moving transition panel itself to a goal location (possibly reaching subB[0] or hitting the sub panel's empty spot). Transition movement is the MAIN mechanic, e-piece merging may be secondary or irrelevant.",
+    "category": "hypothesis",
+    "turn": 141,
+    "level": 2,
+    "timestamp": "2026-04-14T09:57:19.956240"
+  },
+  {
+    "insight": "L2 critical findings (turn 30): Standard merges {B[1]+B[2]\u2192B[3]}, {B[3]+B[4]\u2192B[5]} work, leaving {B[5], B[6], sub}. From dead-end, transition at \"B[7]\" or beyond doesn't enable B[5] click (still tallies) or change B[6] hint (still B[4] only). Transition at every position = same hints. Pieces CAN'T reach transition panel. Mechanism NOT YET FOUND. Game semantics detects Player=color 14 (e-pieces), Goal=color 12 (transition c-interior) \u2014 so pieces must reach transition somehow.",
+    "category": "observation",
+    "turn": 178,
+    "level": 2,
+    "timestamp": "2026-04-14T10:32:58.512203"
+  },
+  {
+    "insight": "L2 CRITICAL FAIL TRIGGER: From dead-end {B[5], B[6], sub}, clicking B[6] then B[4] (executing the only available hint) reaches state {B[4], sub} which the engine detects as unwinnable \u2192 triggers giant F-key fail screen at bottom-left of grid (color 15 ~52 cells) with hole around (6, 52). Click F-key hole to reset. **Standard chain B[1]+B[2]\u2192B[3], B[3]+B[4]\u2192B[5] is a DEATH SEQUENCE \u2014 never execute the 2nd merge in this direction.** Alternative B[4]+B[3]\u2192B[2] also dead-ends to {B[2], B[6], sub} which is also unwinnable. So the FIRST merge cannot just blindly cascade \u2014 the transition panel MUST be used to enable a 3rd+ merge somewhere.",
+    "category": "mechanic",
+    "turn": 186,
+    "level": 2,
+    "timestamp": "2026-04-14T10:42:26.144531"
+  },
+  {
+    "insight": "L2 cycle 2: from spawn state {B1,B2,B4,B6,sub10}, only B1 and B2 have valid initial jumps. Sequence B1->B3, B3->B5, B6->B4 triggers actual f-key fail. ACTION7 reliably undoes any action including fails. Transition position has zero effect on jump validity.",
+    "category": "observation",
+    "turn": 218,
+    "level": 2,
+    "timestamp": "2026-04-14T11:07:45.856930"
+  },
+  {
+    "insight": "L2 ACTION7 = unlimited undo stack. Each ACTION7 reverses the most recent action including failed jumps, deselections, selections, successful jumps. Confirmed by chaining 3 ACTION7s reverting through deselect, select, jump.",
+    "category": "mechanic",
+    "turn": 227,
+    "level": 2,
+    "timestamp": "2026-04-14T11:17:50.100825"
+  },
+  {
+    "insight": "L2 f-key body click (NOT hole) at e.g. (5,49) does TWO things at once: (1) undoes the failed jump restoring all e-pieces, (2) moves the transition panel left 6 cols (same as ACTION3). 304 cells changed. Distinct from f-key hole click which is full L2 reset.",
+    "category": "mechanic",
+    "turn": 227,
+    "level": 2,
+    "timestamp": "2026-04-14T11:17:52.759738"
+  },
+  {
+    "insight": "L2 transition b-border click (color 11) only increments tally, no special effect. Same for c-interior click. Transition is purely positional \u2014 its alignment with main columns has zero effect on jump validity.",
+    "category": "observation",
+    "turn": 227,
+    "level": 2,
+    "timestamp": "2026-04-14T11:17:54.596828"
+  },
+  {
+    "insight": "L2 MAJOR REFRAME 2026-04-14: What we called \"cycle 1\" is actually L1's solve, and \"cycle 2 spawn\" is L2's initial state. L1 has TWO valid 4-jump solutions: B[1]\u2192B[3]\u2192B[5]\u2192sub[0][1]\u2192sub[2][1] OR B[1]\u2192B[3]\u2192B[5]\u2192sub[0][1] then sub[1][1]\u2192C[5] over sub[0][1] (clicking BOTTOM of column-5 chain selects up-direction). Both complete L1 in 8 actions and land on L2 (5 pieces + transition panel).",
+    "category": "mechanic",
+    "turn": 243,
+    "level": 1,
+    "timestamp": "2026-04-14T11:29:45.261959"
+  },
+  {
+    "insight": "L2 reset state: 5 e-pieces at {B[1], B[2], B[4], B[6], sub[1][0]} PLUS transition panel `bccccb` at center (movable via ACTION3/4). Sub[1][0] is column-aligned with main col 6 (B[6]). All standard peg-solitaire opening jumps dead-end at 3 pieces. The transition panel mechanic is required for L2 win.",
+    "category": "observation",
+    "turn": 243,
+    "level": 2,
+    "timestamp": "2026-04-14T11:29:47.932594"
+  },
+  {
+    "insight": "TRANSITION MOVES IN 2D: ACTION1=up, ACTION2=down, ACTION3=left, ACTION4=right. Vertical movement only enabled at LEFT-EXTREME horizontal position (cols 11-18). Vertical range: rows 30-37, 36-43, 42-49.",
+    "category": "mechanic",
+    "turn": 289,
+    "level": 2,
+    "timestamp": "2026-04-14T14:22:25.436923"
+  },
+  {
+    "insight": "Board has TWO horizontal corridors (rows 33-34 and rows 51-52) and TWO vertical corridors (cols 14-15 left, cols 56-57 right) connecting main and sub panels. B[1] is column-aligned with LEFT corridor. sub[1][0] and B[6] are at cols 43-46 (no corridor alignment).",
+    "category": "observation",
+    "turn": 289,
+    "level": 2,
+    "timestamp": "2026-04-14T14:22:27.098152"
+  },
+  {
+    "insight": "Transition has L-shape movement path: horizontal movement (ACTION3/4) only at default row (rows 30-37). Vertical movement (ACTION1/2) only at leftmost column (cols 11-18). Cannot freely move in 2D. From leftmost col, 3 vertical positions: rows 30-37, 36-43, 42-49.",
+    "category": "mechanic",
+    "turn": 296,
+    "level": 2,
+    "timestamp": "2026-04-14T14:25:39.314581"
+  },
+  {
+    "insight": "Transition position does NOT act as virtual peg for peg-solitaire validation. Same B[6]+B[5]\u2192B[4] jump fails at both leftmost (cols 11-18) AND rightmost (cols 47-54) transition positions. The transition is purely decorative/positional for peg-solitaire rules. Solution must be DIFFERENT from peg-solitaire extension.",
+    "category": "observation",
+    "turn": 322,
+    "level": 2,
+    "timestamp": "2026-04-14T15:06:10.148447"
+  },
+  {
+    "insight": "L3 SOLVED locally in 46 actions (baseline 74). Key mechanic: world-shifts via loaded trans navigation are effectively viewport scrolling \u2014 pieces offscreen become visible. Solve path: M1+M2+M3 (6 clicks, panel-A consolidation) + A3 + load top trans (3 actions) + A4\u00d72 (reveals right) + 2 side-jumps + A4 + col-43 chain (6 clicks) + [1,1,4,4,2,2,4] (7 actions, repositions bot trans) + load bot trans + [3,1,1,3,3,2,2,3,3] (9 actions, pans to reveal bottom-left pieces) + 2 final merges. Full solution in solutions/solution_lf52_l3.py.</insight>\n<parameter name=\"category\">strategy",
+    "category": "mechanic",
+    "turn": 350,
+    "level": 3,
+    "timestamp": "2026-04-14T20:28:44.951845"
+  },
+  {
+    "insight": "The 'dynamic world' in L3 is VIEWPORT TRACKING of the loaded trans. As loaded trans navigates corridors, the visible region follows it \u2014 pieces that appeared 'offscreen' were always there, just not rendered. This changes the strategy: instead of trying to merge pieces visible at init, use loaded trans to pan to different regions, then merge what's locally visible.</insight>\n<parameter name=\"category\">mechanic",
+    "category": "mechanic",
+    "turn": 350,
+    "level": -1,
+    "timestamp": "2026-04-14T20:28:47.766371"
+  },
+  {
+    "insight": "Session 2026-04-14 MCP turn 12: L1 done, L2 merges 1+2 done. To finish LF52 3/10: resume solutions/solution_lf52_full.py LF52_FULL_SOLVE index 6 onward (77 steps).</insight>\n<parameter name=\"category\">summary",
+    "category": "mechanic",
+    "turn": 355,
+    "level": -1,
+    "timestamp": "2026-04-14T20:34:07.265995"
+  },
+  {
+    "insight": "L4 init (post-L3 turn 89): Main 7x4 panel rows 16-35 cols 4-47. Row B: [empty, e, f, empty, f, empty, e]. Rows A,C,D empty. Bottom-right sub-panel 1 e-piece. Vehicle bccccb right corridor cols 52-57. A3=left A4=right. Baseline 86. Goal=color 7 (6 cells, permanent).",
+    "category": "observation",
+    "turn": 566,
+    "level": 4,
+    "timestamp": "2026-04-14T21:39:38.515023"
+  },
+  {
+    "insight": "solution_lf52_full.py verified end-to-end on live MCP (L1+L2+L3=89 actions, lc 0\u21923). Requires clean reset. lf52_tool.LF52 drives same engine as MCP (not a simulator).",
+    "category": "strategy",
+    "turn": 566,
+    "level": -1,
+    "timestamp": "2026-04-14T21:39:39.745821"
+  },
+  {
+    "insight": "L4 MAJOR MECHANIC: E-pieces can jump ONTO the vehicle (bccccb), not just over f-containers. Clicking an e-piece when vehicle is in reach shows vehicle as valid hint target. Loading a piece into vehicle triggers world expansion: 1662 cells change, new panels appear, new f-containers reveal. Color-7 count grew 6\u21929 after first delivery. So the puzzle is about delivering e-pieces to/via vehicles to reach new regions.",
+    "category": "mechanic",
+    "turn": 573,
+    "level": 4,
+    "timestamp": "2026-04-14T21:43:07.725186"
+  },
+  {
+    "insight": "L4 pause at turn 108, lc=3 (21 L4 actions used of baseline 86). Discovered: f-containers = permanent pegs (jump over), e-pieces can jump ONTO vehicle \u2192 triggers world expansion revealing new panels + new f-containers (color-7: 6\u21929). Second sub misread subsequent A3/A4 as \"pan only\" \u2014 but those are vehicle moves (pan is secondary, viewport follows). NEXT: identify coord/click to unload loaded vehicle at an f-container, or discover full solve path via vehicle delivery.",
+    "category": "strategy",
+    "turn": 581,
+    "level": 4,
+    "timestamp": "2026-04-14T21:46:01.657011"
+  },
+  {
+    "insight": "L4 peg-jumps chain ACROSS panels. Turns 111-117: e-piece chained 4 jumps over f-containers, delivered from top-right panel to bottom-mid panel. F-containers stayed intact. color-7 count unchanged throughout the chain. Completion condition is NOT \"fill f-containers by sliding over them\" \u2014 something else decides lc advance.",
+    "category": "observation",
+    "turn": 597,
+    "level": 4,
+    "timestamp": "2026-04-14T22:14:27.602739"
+  },
+  {
+    "insight": "L4 paused turn 135, 47 of 86 actions used, lc stays 3",
+    "category": "strategy",
+    "turn": 608,
+    "level": 4,
+    "timestamp": "2026-04-14T22:28:18.755863"
+  },
+  {
+    "insight": "L4 right-drive extends world by 6 cols and brings main panel adjacent to top vehicle",
+    "category": "mechanic",
+    "turn": 608,
+    "level": 4,
+    "timestamp": "2026-04-14T22:28:39.203976"
+  },
+  {
+    "insight": "L4 click on adjacent e-piece next to loaded vehicle returns null cells change",
+    "category": "mechanic",
+    "turn": 608,
+    "level": 4,
+    "timestamp": "2026-04-14T22:28:55.441854"
+  },
+  {
+    "insight": "L4 color-7 peg cells return null on click. Goal pegs are untouchable by any mechanic tried so far.",
+    "category": "mechanic",
+    "turn": 610,
+    "level": 4,
+    "timestamp": "2026-04-14T22:30:05.265485"
+  },
+  {
+    "insight": "L4 right-drive saturates after one step. Second right-drive is blocked, does nothing but tick the counter.",
+    "category": "mechanic",
+    "turn": 610,
+    "level": 4,
+    "timestamp": "2026-04-14T22:30:06.916012"
+  },
+  {
+    "insight": "Peg-solitaire plus vehicle deliveries plus world expansion. Unsolved after 49 of 86 actions; win condition still elusive.",
+    "category": "summary",
+    "level": 4,
+    "turn": 610,
+    "timestamp": "2026-04-14T22:30:08.530933"
+  },
+  {
+    "insight": "L4 bottom free e-piece shows TWO slide hints: left over f-container plus a weird up-right target at tile row 2 col 4. Clicking up-right hint deselects without executing - may be invalid slide. Left jump executes normally but does not advance lc.",
+    "category": "mechanic",
+    "turn": 617,
+    "level": 4,
+    "timestamp": "2026-04-14T22:37:50.074690"
+  },
+  {
+    "insight": "LF52 uses slide merge peg solitaire. Chain of filled pieces slides to first empty past chain absorbing all into one piece at destination",
+    "category": "mechanic",
+    "turn": 617,
+    "level": -1,
+    "timestamp": "2026-04-14T22:38:14.043867"
+  },
+  {
+    "insight": "L4 pause T144 lc 3 used 56 of 86 actions 30 remaining A3 moved trans back to near start",
+    "category": "strategy",
+    "turn": 617,
+    "level": 4,
+    "timestamp": "2026-04-14T22:38:14.784219"
+  },
+  {
+    "insight": "L4 FULL MECHANICS: Click e-piece to select (green border) if adjacent filled (f or e). Red hint shows jump landing. Click hint executes. Jumping INTO vehicle interior LOADS it. Loading triggers WORLD EXPANSION: +3 color-7 goals spawn in new panels, viewport shifts. Loaded e click + hint UNLOADS and chain-absorbs adjacent e-pieces along slide path. A3/A4 move BOTTOM (not loaded top) vehicle by 6 cols. Up/down peg-jumps via f above/below. Horizontal jumps need e or f pivot adjacent. 2 A4s after first load trigger second expansion (+6 color-7).",
+    "category": "mechanic",
+    "turn": 617,
+    "level": 4,
+    "timestamp": "2026-04-14T23:14:34.997102"
+  },
+  {
+    "insight": "L4 LOCAL PROGRESS: solutions/solution_lf52_l4_partial.py has a verified 25-action sequence that reaches (lvl=3, e=16, 7=17, f=72, 3 e-clusters including loaded top vehicle). Includes load-top-vehicle, unload-chain, double down-jumps, load-bottom-vehicle. From this state still need to solve final puzzle (win condition unclear). lf52_tool.py now supports up_to_level=4 for rapid local iteration.",
+    "category": "strategy",
+    "turn": 617,
+    "level": 4,
+    "timestamp": "2026-04-14T23:15:35.992560"
+  },
+  {
+    "insight": "MCP turn 146: Clicked bottom free e (43,49) \u2014 got green selection + RED hint at (55,49). Executed jump \u2192 e moved to (55,49), f-container intact, NO world expansion, NO level advance. Simple f-pivot right-jump works but doesn't win. Cells_changed=45. State remains 36 e-cells, 15 color-7. Piece count unchanged. Vehicle-load-only mechanism to expand world + spawn appears to be the ONLY way to change piece count, but spawn-cancels-merge.",
+    "category": "observation",
+    "turn": 619,
+    "level": 4,
+    "timestamp": "2026-04-14T23:30:01.312321"
+  },
+  {
+    "insight": "L4 BREAKTHROUGH 2026-04-15: Found the \"weird up\" hint. When e-piece is BELOW an f-container (same column), clicking e shows a RED hint ABOVE the f. Executing jumps e UP over f to tile above. Confirmed on MCP: (55, 49) click showed hints at (55, 37) [up] AND (43, 49) [left]. Clicking (55, 37) moved piece up 4 rows via vertical f-pivot. Chain multiple up-jumps work: (55, 49)\u2192(55, 37) then (55, 37)\u2192(55, 25). Vertical piece movement through panels is possible! Also A3 from non-deadlock states triggers 712-cell viewport shift, revealing new panels.",
+    "category": "mechanic",
+    "turn": 629,
+    "level": 4,
+    "timestamp": "2026-04-15T00:53:55.148938"
+  },
+  {
+    "insight": "L4 MCP session 2026-04-15 ended at turn 160 (16 L4 actions used of remaining 30). Up-jump mechanic confirmed: click e-piece \u2192 red hint both UP (via f above) and DOWN (via f below). Piece at (55, 37) has 2 vertical hints. Piece at (31, 25) is completely isolated \u2014 NO hints. Loaded top vehicle e at (19, 25) is NOT clickable in this state. A7 is UNDO (reversed the A3 viewport shift). Sub-panel likely absorbed during earlier chain. To solve from here: need a way to either (1) unload top vehicle, or (2) reach (31, 25) to mobilize it. Neither found. Strategy for future: reset MCP to L1, try a DIFFERENT L4 opening that doesn't isolate the tile-0 piece.",
+    "category": "strategy",
+    "turn": 633,
+    "level": 4,
+    "timestamp": "2026-04-15T00:58:40.785806"
+  },
+  {
+    "insight": "LF52 MCP reset() DESTROYS all level progress and brings back to L1 (lc=0, turn=0). Do NOT call reset() unless you have capacity to replay 89+ actions for L1+L2+L3. Journal state persists across reset, but game state does not.",
+    "category": "mechanic",
+    "turn": 634,
+    "level": -1,
+    "timestamp": "2026-04-15T01:30:21.581789"
+  },
+  {
+    "insight": "**Do NOT call reset() on MCP** unless there's a way to batch-replay L1+L2+L3 (89 actions) without overflowing context. Each MCP step returns ~6K chars (full Before+After grids + perceive), so 89 steps = ~534K chars = context explosion. Session 2026-04-15 called reset() assuming it'd be harmless; it wasn't. Level 1-3 progress was lost and cannot be recovered in-session. **Solution for future: write a local python script that uses arc_agi directly to execute 89-action replay + attempted L4 solve, THEN send only the final status/result back via MCP step chain. OR add a \"verbose=false\" option to the MCP step tool to skip the grid dumps.**",
+    "category": "strategy",
+    "turn": 635,
+    "level": -1,
+    "timestamp": "2026-04-15T07:03:16.030585"
+  }
+]
