@@ -175,7 +175,13 @@ class Sim:
 
     # --- signature for hashing ------------------------------------------
     def sig(self):
-        return (self.piece_pos, self.vehicle_pos, self.dgx_pos)
+        # Group blues together: they're interchangeable for game logic.
+        # Regs are too (both "fozwvlovdui"), but we track reg1/reg2 separately
+        # only so the user can distinguish in plan output.
+        reg_positions = tuple(sorted(p for pid, p in self.piece_pos if pid.startswith('reg')))
+        blue_positions = tuple(sorted(p for pid, p in self.piece_pos if pid.startswith('blue')))
+        red_pos = next((p for pid, p in self.piece_pos if pid == 'red'), None)
+        return (reg_positions, blue_positions, red_pos, self.vehicle_pos, self.dgx_pos)
 
 
 def load_init(path='/tmp/l7_init.json') -> Sim:
