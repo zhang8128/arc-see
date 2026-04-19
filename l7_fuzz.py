@@ -70,4 +70,7 @@ def fuzz(n_steps=50):
 
 
 if __name__ == '__main__':
-    fuzz(n_steps=200)
+    for seed in range(10):
+        random.seed(seed)
+        print(f'=== seed {seed} ===')
+        fuzz(n_steps=500)
