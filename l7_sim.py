@@ -37,11 +37,11 @@ DIRS = [(0, -1), (0, 1), (-1, 0), (1, 0)]  # up, down, left, right
 # dgxfozncuiz      → DGX pivot (permanent)
 # kraubslpehi*     → track variants (vehicle can be here)
 
-PIECE_NAMES = {
-    'reg1': 'fozwvlovdui',
-    'reg2': 'fozwvlovdui',
-    'red': 'fozwvlovdui_red',
-}
+PIECE_NAMES = {}
+for i in range(1, 20):
+    PIECE_NAMES[f'reg{i}'] = 'fozwvlovdui'
+    PIECE_NAMES[f'blue{i}'] = 'fozwvlovdui_blue'
+PIECE_NAMES['red'] = 'fozwvlovdui_red'
 
 
 @dataclass(frozen=True)
@@ -198,6 +198,7 @@ def load_init(path='/tmp/l7_init.json') -> Sim:
         if static_names:
             static[(x, y)] = static_names
     reg_count = 0
+    blue_count = 0
     for s in d['sprites']:
         n = s['name']
         pos = tuple(s['pos'])
@@ -207,7 +208,8 @@ def load_init(path='/tmp/l7_init.json') -> Sim:
         elif n == 'fozwvlovdui_red':
             piece_pos['red'] = pos
         elif n == 'fozwvlovdui_blue':
-            piece_pos['blue'] = pos
+            blue_count += 1
+            piece_pos[f'blue{blue_count}'] = pos
         elif n == 'hupkpseyuim2':
             vehicle_pos.append(pos)
         elif n == 'dgxfozncuiz':
