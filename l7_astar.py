@@ -1,84 +1,76 @@
-"""L7 A* search with heuristic based on piece Manhattan distance + vehicle-relevant positioning.
+"""Heuristic search: prioritize states where a regular piece is closer
+to (22, 5).
 
-Heuristic: min distance between regular pieces OR min(dist_to_load_position + dist_to_merge_position).
+Heuristic: min chebyshev distance from any reg piece to (22, 5).
+(We pick reg because consumption only works with reg-as-pivot/source.)
+
+A* ordering: f = g + h, g = depth, h = admissible underestimate.
+Since each chain moves exactly 2 cells, h_cells = ceil(chebyshev/2).
 """
 import sys
 sys.path.insert(0, '/Users/kairos/Projects/arc-see')
+import time
 import heapq
-from l7_sim import State, initial_state, move_vehicles, try_chain, next_states, STATIC_SPRITES
+from collections import defaultdict
+
+from l7_sim import load_init, Sim
+from l7_search import moves
+from l7_search_deep import at_chain9
+
+GOAL = (22, 5)
 
 
-def heuristic(state):
-    """Lower-bound estimate of actions needed to reach foz=2."""
-    foz = state.foz_count()
-    if foz <= 2:
+def heuristic(s):
+    regs = [p for pid, p in s.piece_pos if 'reg' in pid]
+    if not regs:
         return 0
-
-    # For L7, we need 1 merge of regular pieces.
-    # Find positions of regular pieces (in panel or loaded in vehicle)
-    regular_positions = []
-    for p in state.pieces:
-        if not p[2]:
-            regular_positions.append(p[:2])
-    for (vx, vy, _, loaded) in state.vehicles:
-        if loaded is not None and not loaded[2]:
-            regular_positions.append((vx, vy))
-
-    if len(regular_positions) < 2:
-        return 100  # bad state
-
-    # Min Manhattan distance between any pair
-    min_d = float('inf')
-    for i in range(len(regular_positions)):
-        for j in range(i+1, len(regular_positions)):
-            d = abs(regular_positions[i][0] - regular_positions[j][0]) + abs(regular_positions[i][1] - regular_positions[j][1])
-            min_d = min(min_d, d)
-    # At minimum, we need that many actions to bring pieces together + 1 chain
-    return max(1, min_d // 2)
+    # Min cells to (22,5) from any reg, div 2 (chains move 2 cells)
+    dists = [max(abs(p[0]-GOAL[0]), abs(p[1]-GOAL[1])) for p in regs]
+    return (min(dists) + 1) // 2
 
 
-def a_star(max_actions=60):
-    start = initial_state()
-    target_foz = 2
-    print(f'INITIAL: foz={start.foz_count()}, pieces={sorted(start.pieces)}', flush=True)
-
-    # Priority queue: (f, id, state, path)
-    counter = 0
-    heap = [(heuristic(start), 0, start, [])]
-    best_cost = {start: 0}
-    best_foz = start.foz_count()
+def astar(start, goal_fn, cap):
+    pq = [(heuristic(start), 0, 0, start)]
+    counter = 1
+    best_g = {start.sig(): 0}
+    best_h = heuristic(start)
+    t = time.time()
     explored = 0
-
-    while heap:
-        f, _, state, path = heapq.heappop(heap)
-        g = len(path)
-        if g > max_actions:
-            continue
+    while pq:
+        f, g, _, s = heapq.heappop(pq)
+        if len(best_g) > cap:
+            print(f'  cap {cap}')
+            break
+        if goal_fn(s):
+            return s, g
         explored += 1
-        if explored % 50000 == 0:
-            print(f'  explored {explored}, depth {g}, f={f}, best foz {best_foz}', flush=True)
-
-        foz = state.foz_count()
-        if foz < best_foz:
-            best_foz = foz
-            print(f'  New best foz={foz} at depth {g}: {" ".join(path)}', flush=True)
-        if foz == target_foz:
-            print(f'\nWIN! Depth {g}: {" ".join(path)}')
-            return path
-
-        for action, ns in next_states(state):
-            new_g = g + 1
-            if ns in best_cost and best_cost[ns] <= new_g:
-                continue
-            best_cost[ns] = new_g
-            new_path = path + [action]
-            new_f = new_g + heuristic(ns)
-            counter += 1
-            heapq.heappush(heap, (new_f, counter, ns, new_path))
-
-    print(f'Exhausted. best_foz={best_foz}')
-    return None
+        if explored % 100000 == 0:
+            h = heuristic(s)
+            print(f'  explored={explored:,} seen={len(best_g):,} f={f} g={g} h={h} best_h={best_h} t={time.time()-t:.0f}s')
+        h_now = heuristic(s)
+        if h_now < best_h:
+            best_h = h_now
+            regs = [(pid, p) for pid, p in s.piece_pos if 'reg' in pid]
+            closest = min(regs, key=lambda x: max(abs(x[1][0]-GOAL[0]), abs(x[1][1]-GOAL[1])))
+            print(f'  new best h={best_h} g={g} closest reg={closest} pieces={s.pieces}')
+            print(f'    vehicles={s.vehicle_pos}')
+        for mv, ns in moves(s):
+            ng = g + 1
+            nsig = ns.sig()
+            if nsig not in best_g or ng < best_g[nsig]:
+                best_g[nsig] = ng
+                nh = heuristic(ns)
+                heapq.heappush(pq, (ng + nh, ng, counter, ns))
+                counter += 1
+    return None, -1
 
 
 if __name__ == '__main__':
-    a_star(max_actions=60)
+    s = at_chain9()
+    print(f'Start heuristic: {heuristic(s)}')
+    print(f'Pieces: {s.pieces}')
+    result, depth = astar(s, lambda st: st.foz_count() < 3, cap=10_000_000)
+    if result:
+        print(f'WIN at g={depth}. pieces={result.pieces}')
+    else:
+        print('no win found')
