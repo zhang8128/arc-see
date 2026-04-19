@@ -13,7 +13,7 @@ def goal(s):
     return len(s.piece_pos) < 12
 
 
-def bfs(cap=10_000_000):
+def bfs(cap=50_000_000):
     s0 = load_init('/tmp/l10_init.json')
     frontier = deque([s0])
     seen = {s0.sig(): (None, None, 0)}
