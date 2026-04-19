@@ -23,6 +23,8 @@ from arc_see.lenses import (
     MechanicsMap,
     Annotation,
 )
+from arc_see.lenses.action_map import ActionMap
+from arc_see.lenses.resources import ResourceTracker
 
 _ACTION_MAP = {
     "ACTION1": GameAction.ACTION1,
@@ -57,14 +59,21 @@ class GameSession:
 
     def reset(self) -> str:
         """Reset the environment and return initial perception."""
+        # Double reset: R11L (and possibly others) leak mutable game state
+        # across single resets, causing corrupted arm behavior in L2+.
+        # The second reset clears the residual state.
+        self.env.reset()
         obs = self.env.reset()
         grid = np.array(obs.frame[-1], dtype=np.int64)
 
-        # Reset per-episode state but preserve learned
+        # Reset per-episode state; clear learned to avoid stale assumptions
+        self.learned = {}
         self.frames = [grid]
         self._action_history = []
         self.turn_count = 0
         self.last_state = GameState.NOT_FINISHED
+        # env.reset() starts at L1 — mirror the engine's count (usually 0).
+        self.levels_completed = int(getattr(obs, "levels_completed", 0))
         self._cells_changed_history = []
 
         # Reset stateful lenses
@@ -111,6 +120,12 @@ class GameSession:
             return "Both x and y are required for coordinate actions."
         if x is not None and y is not None:
             data = {"x": x, "y": y}
+        # Tell the action_map lens which action we're about to take
+        from arc_see.lenses.action_map import action_map_lens
+        action_map_lens.record_action(action_name)
+        if "player_color" in self.learned:
+            action_map_lens.set_player_color(int(self.learned["player_color"]))
+
         obs = self.env.step(game_action, data=data)
         grid = np.array(obs.frame[-1], dtype=np.int64)
         self.frames.append(grid)
@@ -119,8 +134,11 @@ class GameSession:
         self.total_turns += 1
         self.last_state = obs.state
 
-        if obs.state == GameState.WIN:
-            self.levels_completed += 1
+        # Mirror the authoritative per-level counter from the game engine.
+        # Note: obs.state stays NOT_FINISHED between levels — it only flips to
+        # WIN when ALL levels are done. Using state as a trigger misses every
+        # intermediate level advance.
+        self.levels_completed = int(getattr(obs, "levels_completed", self.levels_completed))
 
         # Compute diff
         parts = [f"## Action: {action_name}"]
@@ -132,12 +150,21 @@ class GameSession:
             if diff:
                 parts.append(f"Movement: {diff}")
             changed = int(np.sum(prev_grid != grid))
-            parts.append(f"Pixels changed: {changed}")
+            parts.append(f"Cells changed: {changed}")
             self._cells_changed_history.append(changed)
+
+        # Show before and after grids
+        if prev_grid is not None:
+            parts.append("")
+            parts.append("### Before\n" + self._render_grid(prev_grid))
+        parts.append("")
+        parts.append("### After\n" + self._render_grid(grid))
 
         # Run perception on new frame
         history = self.frames[-10:-1] if len(self.frames) > 1 else []
         self.annotations = self.composer.perceive(grid, history)
+        parts.append("")
+        parts.append(self._format_perception(self.annotations, grid))
 
         return "\n".join(parts)
 
@@ -236,7 +263,7 @@ class GameSession:
             elif isinstance(ann, EdgeMask):
                 edge_count = int(ann.mask.sum())
                 spatial_parts.append(
-                    f"- {name}: {edge_count} edge pixels"
+                    f"- {name}: {edge_count} edge cells"
                 )
         if spatial_parts:
             sections.append("### Spatial\n" + "\n".join(spatial_parts))
@@ -290,7 +317,7 @@ class GameSession:
                 changed = int(ann.mask.sum())
                 if changed:
                     temporal_parts.append(
-                        f"- {name}: {changed} pixels changed color"
+                        f"- {name}: {changed} cells changed color"
                     )
         if temporal_parts:
             sections.append("### Temporal\n" + "\n".join(temporal_parts))
@@ -356,6 +383,39 @@ class GameSession:
         if mechanics_parts:
             sections.append("### Mechanics\n" + "\n".join(mechanics_parts))
 
+        # Action Map
+        action_parts: list[str] = []
+        for name, ann in annotations.items():
+            if isinstance(ann, ActionMap):
+                if ann.summary:
+                    action_parts.append("- Action effects learned so far:")
+                    for act, desc in sorted(ann.summary.items()):
+                        action_parts.append(f"  - {act}: {desc}")
+        if action_parts:
+            sections.append("### Action Map\n" + "\n".join(action_parts))
+
+        # Resources
+        resource_parts: list[str] = []
+        for name, ann in annotations.items():
+            if isinstance(ann, ResourceTracker):
+                # Show non-stable trends
+                changing = {c: t for c, t in ann.trends.items() if t != "stable"}
+                if changing:
+                    resource_parts.append("- Changing resources:")
+                    for color, trend in sorted(changing.items()):
+                        count = ann.counts.get(color, 0)
+                        deltas = ann.deltas.get(color, [])
+                        delta_str = ",".join(str(d) for d in deltas)
+                        resource_parts.append(
+                            f"  - color {color}: {count} cells, {trend} (recent: {delta_str})"
+                        )
+                if ann.possible_counters:
+                    resource_parts.append(
+                        f"- Possible counters: colors {ann.possible_counters}"
+                    )
+        if resource_parts:
+            sections.append("### Resources\n" + "\n".join(resource_parts))
+
         # Game Semantics
         semantics = ["### Game Semantics"]
         semantics.append(self._format_color_census(grid))
@@ -373,8 +433,8 @@ class GameSession:
             semantics.append(f"Physics: {self.learned['physics']}")
         sections.append("\n".join(semantics))
 
-        # Compact grid
-        sections.append("### Grid (4x downsampled)\n" + self._render_grid_compact(grid))
+        # Full grid
+        sections.append("### Grid\n" + self._render_grid(grid))
 
         return "\n\n".join(sections)
 
@@ -407,7 +467,7 @@ class GameSession:
         total_cells = curr.shape[0] * curr.shape[1]
         parts = []
 
-        # Pick the player as the moved color with the smallest pixel count
+        # Pick the player as the moved color with the fewest cells
         # (players are typically small objects, not large backgrounds)
         color_sizes = {c: int((curr == c).sum()) for c in moved_colors}
         player_candidate = min(color_sizes, key=color_sizes.get)
@@ -471,27 +531,23 @@ class GameSession:
         return (float(positions[:, 0].mean()), float(positions[:, 1].mean()))
 
     def _format_color_census(self, grid: np.ndarray) -> str:
-        """Count pixels per color."""
+        """Count cells per color."""
         unique, counts = np.unique(grid, return_counts=True)
         lines = []
         for color, count in sorted(zip(unique, counts), key=lambda x: -x[1]):
-            lines.append(f"  color {int(color)}: {int(count)} px")
+            lines.append(f"  color {int(color)}: {int(count)} cells")
         return "Color census:\n" + "\n".join(lines)
 
-    def _render_grid_compact(self, grid: np.ndarray, factor: int = 4) -> str:
-        """Render 4x downsampled grid as text."""
-        h, w = grid.shape
+    def _render_grid(self, grid: np.ndarray) -> str:
+        """Render full grid as text. Single hex char per cell."""
         rows = []
-        for r in range(0, h, factor):
+        for r in range(grid.shape[0]):
             row_chars = []
-            for c in range(0, w, factor):
-                block = grid[r:r+factor, c:c+factor]
-                # Most common value in block
-                vals, cnts = np.unique(block, return_counts=True)
-                dominant = vals[cnts.argmax()]
-                if dominant == 0:
+            for c in range(grid.shape[1]):
+                v = int(grid[r, c])
+                if v == 0:
                     row_chars.append(".")
                 else:
-                    row_chars.append(format(int(dominant), "x"))
+                    row_chars.append(format(v, "x"))
             rows.append("".join(row_chars))
         return "\n".join(rows)

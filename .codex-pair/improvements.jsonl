@@ -1,0 +1,32 @@
+{"id":"imp-1775791308","ts":"2026-04-10T03:21:48Z","suggestion":"Document session state location and how to update it","reason":"Make session artifacts discoverable so evaluators and tools can load current context","target_file":"CLAUDE.md","imp_type":"patch","status":"failed","session":"b2a85f9e-171f-4ded-8d77-5cffe3b1f49b","pre_scores":{"context":3,"signal":5,"state":2},"test_output":"no test runner found"}
+{"id":"imp-1775847797","ts":"2026-04-10T19:03:17Z","suggestion":"Add a brief \"Session Summary\" header (context, risks, next checks) at the top so each LGTM carries actionable context","reason":"Improves continuity and substitutes for missing session state without adding new files","target_file":"inspect_near_win.py","imp_type":"patch","status":"pending","session":"c39d2a46-0fbd-461b-a65e-4fdd85309789","pre_scores":{"context":3,"signal":4,"state":2}}
+{
+  "id": "imp-1775865569",
+  "ts": "2026-04-10T23:59:29Z",
+  "suggestion": "Document the exact session state file path and how tools should read/update it (point to `.codex-pair/current-session.json`)",
+  "reason": "Review pipeline can’t find session state, lowering state quality and blocking related improvements",
+  "target_file": ".codex-pair/review-profile.md",
+  "imp_type": "patch",
+  "status": "pending",
+  "session": "a81e1cca-c306-40ef-9784-36e3487cdb26",
+  "pre_scores": {
+    "context": 4,
+    "signal": 4,
+    "state": 2
+  }
+}
+{
+  "id": "imp-1775875007",
+  "ts": "2026-04-11T02:36:47Z",
+  "suggestion": "Add automatic creation and update of a session state file (e.g., JSON) and reference it in reviews",
+  "reason": "A persistent, up-to-date session state improves continuity and reduces shallow LGTMs",
+  "target_file": "arc_see/session.py",
+  "imp_type": "patch",
+  "status": "pending",
+  "session": "a81e1cca-c306-40ef-9784-36e3487cdb26",
+  "pre_scores": {
+    "context": 2,
+    "signal": 3,
+    "state": 2
+  }
+}

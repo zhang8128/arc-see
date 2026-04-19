@@ -6,9 +6,10 @@ from arcengine import GameAction, GameState
 
 class FakeObs:
     """Fake observation returned by env.step/reset."""
-    def __init__(self, frame, state=GameState.NOT_FINISHED):
+    def __init__(self, frame, state=GameState.NOT_FINISHED, levels_completed=0):
         self.frame = [frame]
         self.state = state
+        self.levels_completed = levels_completed
 
 
 def make_env(initial_grid, action_results=None):
@@ -25,7 +26,9 @@ def make_env(initial_grid, action_results=None):
     env.reset.return_value = FakeObs(initial_grid)
 
     if action_results:
-        env.step.side_effect = [FakeObs(f, s) for f, s in action_results]
+        env.step.side_effect = [
+            FakeObs(*r) if isinstance(r, tuple) else r for r in action_results
+        ]
     else:
         env.step.return_value = FakeObs(initial_grid)
 
@@ -131,7 +134,7 @@ class TestGameSession:
         assert "test-game" in result.lower() or "TEST" in result
         assert "Available actions" in result or "available" in result.lower()
 
-    def test_reset_preserves_learned(self):
+    def test_reset_clears_learned(self):
         from arc_see.session import GameSession
         initial = make_sliding_grid()
         moved = make_moved_grid((35, 30))
@@ -141,22 +144,46 @@ class TestGameSession:
         session = GameSession(env)
         session.reset()
         session.step("ACTION1")
-        old_learned = dict(session.learned)
+        assert session.learned  # something was learned
         env.reset.return_value = FakeObs(initial)
         session.reset()
         assert session.turn_count == 0
         assert len(session.frames) == 1
-        assert session.learned == old_learned
+        assert session.learned == {}  # cleared on reset
 
     def test_win_increments_levels(self):
         from arc_see.session import GameSession
         initial = make_sliding_grid()
         win_grid = make_moved_grid((20, 20))
+        # On final-level win, game engine sets levels_completed to the total.
         env = make_env(initial, action_results=[
-            (win_grid, GameState.WIN),
+            FakeObs(win_grid, GameState.WIN, levels_completed=1),
         ])
         session = GameSession(env)
         session.reset()
         result = session.step("ACTION1")
         assert session.levels_completed == 1
         assert "WIN" in result
+
+    def test_step_mirrors_obs_levels_completed_mid_game(self):
+        """Regression: session.levels_completed must mirror obs.levels_completed
+        even when obs.state is still NOT_FINISHED. The game engine keeps state
+        = NOT_FINISHED until ALL levels are done; intermediate level advances
+        are only visible via obs.levels_completed. The old code gated the
+        increment on GameState.WIN and missed every intermediate advance."""
+        from arc_see.session import GameSession
+        initial = make_sliding_grid()
+        mid_grid = make_moved_grid((35, 30))
+        env = make_env(initial, action_results=[
+            # Simulating L1 just finished — engine reports levels_completed=1
+            # while still NOT_FINISHED because L2..L6 remain.
+            FakeObs(mid_grid, GameState.NOT_FINISHED, levels_completed=1),
+        ])
+        session = GameSession(env)
+        session.reset()
+        assert session.levels_completed == 0
+        session.step("ACTION1")
+        assert session.levels_completed == 1, (
+            "session should mirror obs.levels_completed even when state is "
+            "still NOT_FINISHED — regression test for r11l L1-advance bug"
+        )

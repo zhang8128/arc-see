@@ -109,6 +109,38 @@ SOLUTIONS = {
         'C7,11','C5,2','C8,11','R',
         'C8,12','C8,13','C8,14','C8,15','C8,16','C8,17',
         'R'],
+
+    # L9: 94 actions (baseline 163) - final level, full game clear.
+    # 11×46 grid. Player (3,35) grav up. Gem at (2,40). 15 l, 19 u, 11 h, 8 y, 5 q, 2 e.
+    # Path strategy: col 0 vertical tunnel is the only way to reach gem chamber (col 0 rows 39-40
+    # is the only access). Col 1 is all walls except q@(1,8). So plan:
+    #   Phase 1: place e@(2,7) via e-chain climb through col 7 (from e@(7,8)), then destroy q@(1,8).
+    #   Phase 2: destroy all 6 col-0 l tiles remotely (net 0 gravity change — even flips).
+    #   Phase 3: toggle y@(2,15) → o, flip grav down, walk R to col 6, flip up, rise to e@(6,31).
+    #   Phase 4: climb col 6 e-ladder to (6,29), walk L through row 29 (destroy e chain) to (2,29).
+    #   Phase 5: destroy q's at (2,26),(3,26),(4,26), propagate e up col 3 to (2,20),(3,20),(4,20).
+    #   Phase 6: chain-climb col 2 to (2,21) (e@(2,20) blocker stops rise).
+    #   Phase 7: walk R across row 21 destroying e's, placing row-20 blockers at (3-7,20).
+    #   Phase 8: flip grav down, destroy e@(7,22),(7,23),(8,23),(9,23), walk R to (9,23) with
+    #           e@(7,24),(8,24),(9,24) blockers preventing death on row-25 h.
+    #   Phase 9: flip grav up, chain-destroy col 9 up from (9,22) through (9,16), player rises
+    #           with each destroy spawning e above as blocker. y@(9,15) halts final rise at (9,16).
+    #   Phase 10: walk L across row 16, destroying e at each col (C and L alternating) until (2,16).
+    #            Walk L triggers gravity rise through o@(2,15) → e@(2,7) blocker stops at (2,8).
+    #   Phase 11: walk L to (1,8), walk L to (0,8) → rise to (0,7). Flip grav down via l@(9,1)
+    #            → fall col 0 to (0,40) (all l's destroyed). Walk R R to gem at (2,40). WIN.
+    9: ['C7,8','C7,7','C6,7','C5,7','C4,7','C3,7','C1,8',
+        'C0,15','C0,19','C0,21','C0,25','C0,33','C0,35',
+        'C2,15',
+        'C5,1','R','R','R','C6,1','C6,31','C6,30','C6,29',
+        'C5,29','L','C4,29','L','C3,29','L','C2,29','L',
+        'C3,26','C4,26','C2,26','C3,28','C3,27','C3,26','C3,25','C3,24','C3,23','C3,22','C3,21','C3,20',
+        'C2,28','C2,27','C2,26','C2,25','C2,24','C2,23','C2,22','C2,21',
+        'C3,21','R','C4,21','R','C5,21','R','C6,21','R','C7,21','R',
+        'C7,1','C7,22','C7,23','C8,23','R','C9,23','R',
+        'C8,1','C9,22','C9,21','C9,20','C9,19','C9,18','C9,17','C9,16',
+        'C8,16','L','C7,16','L','C6,16','L','C5,16','L','C4,16','L','C3,16','L','C2,16','L',
+        'L','L','C9,1','R','R'],
 }
 
 

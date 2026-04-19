@@ -131,7 +131,10 @@ class GoalDetection:
     best_similarity: float      # highest similarity across all goals
 
 
-# Union of all annotation types
+# Note: ActionMap and ResourceTracker are defined in their own modules
+# to avoid circular imports. They register via register() on import.
+# The Annotation union below is not exhaustive — it covers the core types.
+# isinstance checks in session.py import the additional types directly.
 Annotation = (
     RegionLabels | EdgeMask | ContainmentTree |
     DisplacementField | ChangeMask | StateChangeMask |

@@ -68,8 +68,8 @@ def reflect() -> str:
 def reset() -> str:
     """Reset the current level and get a fresh perception.
 
-    Clears frame history and turn counter. Preserves learned game semantics
-    (player color, goal color, physics, action directions) across resets.
+    Clears everything — frame history, turn counter, and inferred game
+    semantics (player color, goal color, physics). Each level starts clean.
 
     Returns the same output as perceive() on the fresh frame.
     """
@@ -83,7 +83,7 @@ def status() -> str:
 
 
 @mcp.tool()
-def learn(insight: str, category: str = "mechanic") -> str:
+def learn(insight: str, level: int, category: str = "mechanic") -> str:
     """Record a durable insight that survives context compaction.
 
     Write what you've learned about the game. This persists to disk
@@ -95,13 +95,14 @@ def learn(insight: str, category: str = "mechanic") -> str:
 
     Args:
         insight: What you learned. Be specific and actionable.
+        level: Which level this applies to. Use -1 for game-wide rules.
         category: One of "mechanic", "strategy", "hypothesis", "observation"
     """
     entry = {
         "insight": insight,
         "category": category,
         "turn": _get_session().total_turns,
-        "level": _get_session().levels_completed,
+        "level": level,
         "timestamp": datetime.now().isoformat(),
     }
 
@@ -109,37 +110,100 @@ def learn(insight: str, category: str = "mechanic") -> str:
     entries.append(entry)
     _save_journal(entries)
 
-    return f"Learned: [{category}] {insight}"
+    return f"Learned: [{category}] L{level}: {insight}"
 
 
 @mcp.tool()
-def recall() -> str:
-    """Read back everything learned so far across all sessions.
+def recall(level: int | None = None) -> str:
+    """Read back everything learned, organized by level.
 
     Call this after context compaction or at the start of a session
     to recover your accumulated knowledge about the game.
 
-    Returns all insights organized by category.
+    Args:
+        level: If set, show only insights for this level. Otherwise show all.
+
+    Returns insights grouped by level, then by category within each level.
     """
     entries = _load_journal()
     if not entries:
         return "No insights recorded yet. Use learn() to record what you discover."
 
-    by_category: dict[str, list[dict]] = {}
+    # Group by level
+    by_level: dict[int, list[dict]] = {}
     for e in entries:
-        cat = e.get("category", "observation")
-        by_category.setdefault(cat, []).append(e)
+        lvl = e.get("level", 0)
+        by_level.setdefault(lvl, []).append(e)
 
     parts = ["## Game Knowledge (durable — survives compaction)\n"]
-    for cat in ["mechanic", "strategy", "hypothesis", "observation"]:
-        if cat not in by_category:
+
+    levels_to_show = [level] if level is not None else sorted(by_level.keys())
+
+    for lvl in levels_to_show:
+        if lvl not in by_level:
+            parts.append(f"### Level {lvl}\nNo insights recorded.\n")
             continue
-        parts.append(f"### {cat.title()}s")
-        for e in by_category[cat]:
-            level_info = f" (level {e.get('level', '?')}, turn {e.get('turn', '?')})"
-            parts.append(f"- {e['insight']}{level_info}")
+        level_entries = by_level[lvl]
+        header = "Game-wide" if lvl == -1 else f"Level {lvl}"
+        parts.append(f"### {header}")
+
+        # Group by category within level
+        by_cat: dict[str, list[dict]] = {}
+        for e in level_entries:
+            cat = e.get("category", "observation")
+            if cat == "summary":
+                continue  # shown by level_map()
+            by_cat.setdefault(cat, []).append(e)
+
+        for cat in ["mechanic", "strategy", "hypothesis", "observation"]:
+            if cat not in by_cat:
+                continue
+            parts.append(f"**{cat.title()}s:**")
+            for e in by_cat[cat]:
+                parts.append(f"- {e['insight']}")
         parts.append("")
 
+    return "\n".join(parts)
+
+
+@mcp.tool()
+def level_summary(level: int, summary: str) -> str:
+    """Record a one-line summary of what a level is about.
+
+    Call this when you've figured out a level's core mechanic.
+    These summaries form the level map — a bird's-eye view of the game.
+
+    Args:
+        level: The level number.
+        summary: One line — what makes this level tick. e.g. "push maze with moving pickups"
+    """
+    entries = _load_journal()
+    # Remove any existing summary for this level
+    entries = [e for e in entries if not (e.get("category") == "summary" and e.get("level") == level)]
+    entries.append({
+        "insight": summary,
+        "category": "summary",
+        "level": level,
+        "turn": _get_session().total_turns,
+        "timestamp": datetime.now().isoformat(),
+    })
+    _save_journal(entries)
+    return f"Level {level}: {summary}"
+
+
+@mcp.tool()
+def level_map() -> str:
+    """Show the bird's-eye level map — one-line summary per level.
+
+    Call this to see what you know about the overall game structure.
+    """
+    entries = _load_journal()
+    summaries = {e["level"]: e["insight"] for e in entries if e.get("category") == "summary"}
+    if not summaries:
+        return "No level summaries yet. Use level_summary() after understanding each level."
+    parts = ["## Level Map\n"]
+    for lvl in sorted(summaries.keys()):
+        parts.append(f"- **Level {lvl}:** {summaries[lvl]}")
     return "\n".join(parts)
 
 

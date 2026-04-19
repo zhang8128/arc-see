@@ -397,5 +397,61 @@
     "turn": 635,
     "level": -1,
     "timestamp": "2026-04-15T07:03:16.030585"
+  },
+  {
+    "insight": "LF52 is slide-merge peg-solitaire. Eye-pieces (ee pattern inside) are 'live'. Click source eye-piece \u2192 color-3 outline appears on it, color-2 fills valid destinations (1221/2112/2112/1221 pattern). Click destination \u2192 chain slides, absorbing all eye-pieces between, depositing at dest. Win = reduce eye-pieces to 1.",
+    "category": "mechanic",
+    "turn": 638,
+    "level": -1,
+    "timestamp": "2026-04-16T10:53:26.760021"
+  },
+  {
+    "insight": "Level-win signal in perceive(): cells_changed jumps to 1000+, creation_destruction shows hundreds of appearances/disappearances. levels_completed in status() increments. Board layout completely transforms for next level. No need for foz-count introspection.",
+    "category": "mechanic",
+    "turn": 643,
+    "level": -1,
+    "timestamp": "2026-04-16T10:54:40.567020"
+  },
+  {
+    "insight": "L4 rail activation mechanic (2026-04-16): 3 sub-vehicles (hupkpseyuim2) at world (48,18), (48,66), (72,42) move as a group via A3/A4 but hit different walls. Interleaving A3/A4 positions them independently. A3 x 4 from L4 init brings middle vehicle to (48, 42) \u2014 the kraubslpehi-< arrow marker. AT THIS POSITION A2 activates (was diff=0, now diff=120) and moves it to (48, 48). Second A2 moves to (48, 54). A1 is reverse. This is the RAIL \u2014 entry at (48, 42), vertical navigation via A1/A2 only while on rail.",
+    "category": "mechanic",
+    "turn": 647,
+    "level": 4,
+    "timestamp": "2026-04-16T11:25:25.942447"
+  },
+  {
+    "insight": "L4 strategy reframe: NOT single-vehicle delivery. Previous sessions BFS-proved \"col-30 pieces unreachable\" for single-vehicle plans \u2014 true but misleading. Game has 3 sub-vehicles serving 3 zones (main panel, middle rail, sub panel). Each has its own reachable cells. Solution requires coordinating multiple vehicles to meet at rail. User hint 2026-04-16: \"multiple controls control multiple parts \u2014 make the logic meet in the middle.\" To load middle vehicle, need chain that terminates at its position \u2014 likely via piece at (96, 18) chaining down col 96 over f@(96, 24), f@(96, 36) to (96, 42), then left over f@(90, 42).",
+    "category": "strategy",
+    "turn": 647,
+    "level": 4,
+    "timestamp": "2026-04-16T11:25:31.946387"
+  },
+  {
+    "insight": "L4 vehicle reload mechanic: driving loaded main vehicle BACK LEFT via A3 drops off pieces along the way. Post-OPENER state has loaded main vehicle at (78, 18) and pieces at (30,54), (30,78), (78,18), (96,18). After A3 the piece count INCREASES \u2014 at (66,18) loaded, there are 5 fozwvlovdui: (30,54), (30,78), (72,18), (loaded), (96,18). The (72,18) piece was recreated. This matches earlier memory: \"L4 chains can CREATE pieces, not just consume them.\"",
+    "category": "mechanic",
+    "turn": 647,
+    "level": 4,
+    "timestamp": "2026-04-16T11:25:35.340494"
+  },
+  {
+    "insight": "LF52 L4 SOLVED 2026-04-16 via multi-vehicle rail coordination. Key insight: middle sub-vehicle reaches rail marker (48, 42) after A3 x 4, enabling A1/A2 vertical navigation. At (48, 54) rail bottom, f@(48, 60) pivots chain-transfer loaded piece from middle to sub-vehicle at (48, 66) (need A4 x 3 to align sub). Then loaded sub drives to (36, 66), flanked by f@(36, 60) above and f@(36, 72) below \u2014 enables vertical chains that eventually reach col-30 pieces. 34 moves total (vs baseline 86). Full solution in solutions/solution_lf52_l4.py.",
+    "category": "strategy",
+    "turn": 647,
+    "level": 4,
+    "timestamp": "2026-04-16T12:04:02.304749"
+  },
+  {
+    "insight": "LF52 L5 and L6 confirmed solvable from legitimate L4-completed state (not just set_level shortcut). Existing solutions (solution_lf52_l5.py 67 moves, solution_lf52_l6.py 55 moves) work directly when L5/L6 reached via legit L4 solve. Full L1-L6 pipeline in solutions/solution_lf52_l1_to_l6.py. 245 moves total.",
+    "category": "strategy",
+    "turn": 647,
+    "level": -1,
+    "timestamp": "2026-04-16T12:04:04.878820"
+  },
+  {
+    "insight": "LF52 L7 from LEGITIMATE play is RADICALLY different from set_level L7 state. Legit L7 has 3 pieces (2 regular + 1 red at sprite (36, 6)) and SIX sub-vehicles at (30,30), (84,12), (108,18), (114,12), (120,18), (132,24). Previous memory \"3 pieces: reg(0,1), red(6,1), reg(22,6)\" was set_level artifact. The \"l7_*.py\" probes built on set_level state are all stale for legit analysis. Start L7 fresh from legit state.",
+    "category": "observation",
+    "turn": 647,
+    "level": 7,
+    "timestamp": "2026-04-16T12:04:08.549518"
   }
 ]

@@ -1,0 +1,77 @@
+{
+  "ts": "2026-04-10T03:21:48Z",
+  "session": "b2a85f9e-171f-4ded-8d77-5cffe3b1f49b",
+  "learning": "Concise approvals on obviously-correct changes are reliably acted upon.",
+  "source": "outcome_analysis",
+  "confidence": "medium"
+}
+{
+  "ts": "2026-04-10T04:09:56Z",
+  "session": "b2a85f9e-171f-4ded-8d77-5cffe3b1f49b",
+  "learning": "Specific, file-scoped “issues” get acted on immediately, while broad LGTMs pass cleanly.",
+  "source": "outcome_analysis",
+  "confidence": "medium"
+}
+{
+  "ts": "2026-04-10T19:03:17Z",
+  "session": "c39d2a46-0fbd-461b-a65e-4fdd85309789",
+  "learning": "Reviews with concrete, context-aware notes are acted on; bare LGTM comments are more likely ignored.",
+  "source": "outcome_analysis",
+  "confidence": "medium"
+}
+{
+  "ts": "2026-04-10T22:11:51Z",
+  "session": "1c9abde2-dab0-4eea-b279-8f93b7478f25",
+  "learning": "Reviews with concrete, file-scoped findings are acted on, while broad process comments tend to be ignored.",
+  "source": "outcome_analysis",
+  "confidence": "medium"
+}
+{
+  "ts": "2026-04-10T23:08:15Z",
+  "session": "a81e1cca-c306-40ef-9784-36e3487cdb26",
+  "learning": "Reviews that include concrete, file-scoped checks and next steps are acted on more than generic LGTM/concerns.",
+  "source": "outcome_analysis",
+  "confidence": "medium"
+}
+{
+  "ts": "2026-04-10T23:59:29Z",
+  "session": "a81e1cca-c306-40ef-9784-36e3487cdb26",
+  "learning": "Reviews that raise specific, actionable defects tied to concrete probes are acted on more than broad or generic comments.",
+  "source": "outcome_analysis",
+  "confidence": "medium"
+}
+{
+  "ts": "2026-04-11T02:36:47Z",
+  "session": "a81e1cca-c306-40ef-9784-36e3487cdb26",
+  "learning": "Specific, file-scoped suggestions are acted on more than blanket LGTMs.",
+  "source": "outcome_analysis",
+  "confidence": "medium"
+}
+{
+  "ts": "2026-04-11T03:35:23Z",
+  "session": "1153abea-437e-402e-82ef-828475149fc8",
+  "learning": "Concrete, reproducible defect reports in probe scripts are acted on; broad or speculative suggestions tend to be ignored.",
+  "source": "outcome_analysis",
+  "confidence": "medium"
+}
+{
+  "ts": "2026-04-11T04:18:36Z",
+  "session": "1153abea-437e-402e-82ef-828475149fc8",
+  "learning": "Reviews that pinpoint a concrete failure mode (crash/incorrect metric) with a minimal fix are adopted more often than broad performance or docstring-alignment notes.",
+  "source": "outcome_analysis",
+  "confidence": "medium"
+}
+{
+  "ts": "2026-04-11T05:45:44Z",
+  "session": "1153abea-437e-402e-82ef-828475149fc8",
+  "learning": "Reviews that flag concrete crash risks or correctness gaps get acted on; broad or descriptive notes are more often ignored.",
+  "source": "outcome_analysis",
+  "confidence": "medium"
+}
+{
+  "ts": "2026-04-12T00:04:19Z",
+  "session": "1153abea-437e-402e-82ef-828475149fc8",
+  "learning": "Concrete, reproducible defect reports (crashes, logic invariants, mismatched counters) are acted on; abstract or non-failing observations tend to be ignored.",
+  "source": "outcome_analysis",
+  "confidence": "medium"
+}

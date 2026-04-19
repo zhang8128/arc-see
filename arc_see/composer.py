@@ -33,6 +33,8 @@ import arc_see.lenses.structural   # noqa: F401
 import arc_see.lenses.relational   # noqa: F401
 import arc_see.lenses.goal         # noqa: F401
 import arc_see.lenses.mechanics    # noqa: F401
+import arc_see.lenses.action_map   # noqa: F401
+import arc_see.lenses.resources    # noqa: F401
 
 
 class Composer:
