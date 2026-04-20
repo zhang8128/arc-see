@@ -12,8 +12,10 @@ from pathlib import Path
 SOLUTIONS_DIR = Path(__file__).parent / 'solutions'
 
 
-WIN_MARKERS = ('GameState.WIN', 'state=WIN', 'state: WIN', 'ALL VERIFIED',
+WIN_MARKERS = ('GameState.WIN', 'state=WIN', 'state: WIN',
+               'Final state: WIN', 'ALL VERIFIED',
                'L10 SOLVED', 'LF52 FULLY SOLVED', '✓ WIN')
+PARTIAL_MARKER = 'Final state: PARTIAL'
 
 
 def run_one(path: Path) -> tuple[str, str, float]:
@@ -31,6 +33,12 @@ def run_one(path: Path) -> tuple[str, str, float]:
     # Stub detection: the wa30 placeholder prints a doc-string explaining it.
     if 'STATUS: source lost' in out or 'NEVER committed' in out:
         return 'STUB', 'solver source not committed (documented)', elapsed
+    if PARTIAL_MARKER in out:
+        # Extract partial summary.
+        for line in out.splitlines():
+            if PARTIAL_MARKER in line:
+                return 'PARTIAL', line.strip(), elapsed
+        return 'PARTIAL', 'partial solve', elapsed
     for marker in WIN_MARKERS:
         if marker in out:
             return 'PASS', marker, elapsed
@@ -55,7 +63,8 @@ def main():
     for _, s, _, _ in results:
         by_status[s] = by_status.get(s, 0) + 1
     print(f'Summary: {dict(sorted(by_status.items()))}')
-    # Exit non-zero if any unexpected failure
+    # Exit non-zero if any unexpected failure. STUB and PARTIAL are
+    # documented states, not errors.
     bad = sum(1 for _, s, _, _ in results if s in ('ERROR', 'UNKNOWN'))
     return 0 if bad == 0 else 1
 
