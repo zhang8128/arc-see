@@ -277,8 +277,5 @@ def verify_local():
 
 
 if __name__ == '__main__':
-    if '--verify' in sys.argv:
-        print("Verifying known solutions locally...")
-        verify_local()
-    else:
-        print("Run with --verify to test locally")
+    print("Verifying known solutions locally...")
+    verify_local()

@@ -53,3 +53,4 @@ for lvl in range(1, 9):
         break
 
 print(f"\nTotal: {total} actions (baselines: {sum(BASELINES)})")
+print(f"Final state: {obs.state.name}")

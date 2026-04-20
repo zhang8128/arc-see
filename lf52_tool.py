@@ -64,6 +64,116 @@ L2_SOLVE = [
     ('C', (38, 52)), ('C', (50, 52)),
 ]
 
+# L4 solve (34 moves): multi-vehicle rail coordination.
+L4_SOLVE = [
+    ('C', (13, 25)), ('C', (25, 25)),
+    ('C', (25, 25)), ('C', (37, 25)),
+    ('A', 3),
+    ('C', (37, 25)), ('C', (49, 25)),
+    ('A', 4), ('A', 4), ('A', 4), ('A', 4),
+    ('C', (19, 25)), ('C', (31, 25)),
+    ('C', (31, 25)), ('C', (31, 37)),
+    ('C', (31, 37)), ('C', (31, 49)),
+    ('C', (49, 25)), ('C', (49, 37)),
+    ('C', (49, 37)), ('C', (49, 49)),
+    ('C', (49, 49)), ('C', (37, 49)),
+    ('C', (37, 49)), ('C', (25, 49)),
+    ('A', 3), ('A', 3), ('A', 3), ('A', 3),
+    ('A', 2), ('A', 2),
+    ('A', 4), ('A', 4), ('A', 4),
+    ('C', (40, 20)), ('C', (40, 31)),
+    ('A', 3), ('A', 3),
+    ('C', (28, 29)), ('C', (27, 19)),
+    ('C', (28, 17)), ('C', (15, 19)),
+    ('A', 3), ('A', 3),
+    ('C', (16, 17)), ('C', (15, 31)),
+    ('C', (16, 29)), ('C', (15, 43)),
+    ('C', (16, 41)), ('C', (27, 43)),
+]
+
+
+# L5 solve (67 actions) — grid-coord chain solution from BFS simulator.
+# Format: 'A<n>' for action, ('C', (x,y), (dx,dy)) for grid-space chain.
+L5_SOLUTION = [
+    'A4', 'A4', 'A4',
+    'A3',
+    'A2', 'A2', 'A2',
+    'A3', 'A3',
+    'A2', 'A2', 'A2',
+    'A4', 'A4',
+    'A2',
+    'A4',
+    'A1',
+    'A3', 'A3', 'A3', 'A3', 'A3',
+    ('C', (1, 3), (1, 0)),
+    ('C', (3, 3), (1, 0)),
+    'A1', 'A1',
+    ('C', (5, 3), (1, 0)),
+    'A1',
+    'A4', 'A4', 'A4',
+    'A2',
+    ('C', (10, 3), (1, 0)),
+    ('C', (12, 3), (1, 0)),
+    'A1', 'A1',
+    'A4', 'A4', 'A4', 'A4',
+    'A2', 'A2',
+    ('C', (14, 3), (1, 0)),
+    ('C', (16, 3), (1, 0)),
+    'A1', 'A1',
+    'A4',
+    ('C', (18, 4), (0, -1)),
+    ('C', (18, 2), (0, -1)),
+    'A3', 'A3', 'A3',
+    ('C', (19, 0), (-1, 0)),
+    ('C', (17, 0), (-1, 0)),
+    ('C', (15, 0), (0, 1)),
+    'A3', 'A3',
+    'A2', 'A2', 'A2', 'A2',
+    'A4', 'A4',
+    ('C', (15, 2), (0, 1)),
+    ('C', (15, 4), (0, 1)),
+    ('C', (15, 6), (0, 1)),
+    ('C', (16, 8), (-1, 0)),
+]
+
+
+# L6 solve (55 actions) — space-separated token string, parsed lazily.
+L6_SOLUTION_STR = (
+    "A2 A2 C(2, 2)D C(2, 3)D C(2, 4)D C(2, 5)D C(1, 7)R C(3, 8)U C(2, 6)R "
+    "C(3, 6)R C(4, 6)R C(5, 6)R C(6, 6)R A4 A4 A1 A4 A4 A4 A4 A4 A1 A4 A4 A1 A1 "
+    "C(14, 4)U C(14, 2)R C(17, 4)U C(16, 2)R C(17, 2)R C(18, 2)R C(19, 2)R "
+    "C(20, 2)R C(21, 2)R C(22, 2)R C(23, 2)R C(24, 2)R A2 A2 C(26, 2)D C(26, 4)L "
+    "A2 A2 A3 A3 A1 A1 C(24, 4)L A2 A2 C(22, 4)D C(23, 6)L C(22, 6)L C(20, 6)D"
+)
+
+
+def _parse_l6():
+    """Parse the space-separated L6 solution string into steps."""
+    tokens = L6_SOLUTION_STR.split()
+    steps = []
+    i = 0
+    while i < len(tokens):
+        t = tokens[i]
+        if t.startswith('A'):
+            steps.append(('A', int(t[1:])))
+            i += 1
+        elif t.startswith('C('):
+            full = t
+            while ')' not in full:
+                i += 1
+                full += ' ' + tokens[i]
+            paren_end = full.index(')')
+            coords = full[2:paren_end]
+            sx, sy = [int(v.strip()) for v in coords.split(',')]
+            direction_char = full[paren_end + 1:]
+            direction = {'U': (0, -1), 'D': (0, 1), 'L': (-1, 0), 'R': (1, 0)}[direction_char]
+            steps.append(('C', (sx, sy), direction))
+            i += 1
+        else:
+            i += 1
+    return steps
+
+
 # L3 solve: 46 actions (after L2) to reach L4 initial state
 L3_SOLVE = [
     ('C', (13, 13)), ('C', (13, 25)),
@@ -192,7 +302,6 @@ class LF52:
             self._l4_start_snap = copy.deepcopy(self.env._game)
             self._l4_start_frame = np.array(self.obs.frame[-1], dtype=np.int16).copy()
         if up_to_level >= 5:
-            from solutions.solution_lf52_l4 import L4_SOLVE
             for step in L4_SOLVE:
                 kind, val = step
                 if kind == 'C':
@@ -202,8 +311,6 @@ class LF52:
             self._l5_start_snap = copy.deepcopy(self.env._game)
             self._l5_start_frame = np.array(self.obs.frame[-1], dtype=np.int16).copy()
         if up_to_level >= 7:
-            from solutions.solution_lf52_l5 import SOLUTION as L5_SOLUTION
-            from solutions.solution_lf52_l6 import parse_solution as parse_l6
             for step in L5_SOLUTION:
                 if isinstance(step, str):
                     self.obs = self.env.step(getattr(GameAction, f'ACTION{int(step[1:])}'))
@@ -214,7 +321,7 @@ class LF52:
                     self.env.step(GameAction.ACTION6, data={'x': sx*6+3+ox, 'y': sy*6+3+oy})
                     ox, oy = tuple(self.env._game.ikhhdzfmarl.hncnfaqaddg.cdpcbbnfdp)
                     self.obs = self.env.step(GameAction.ACTION6, data={'x': (sx+2*dx)*6+3+ox, 'y': (sy+2*dy)*6+3+oy})
-            for step in parse_l6():
+            for step in _parse_l6():
                 if step[0] == 'A':
                     self.obs = self.env.step(getattr(GameAction, f'ACTION{step[1]}'))
                 else:
