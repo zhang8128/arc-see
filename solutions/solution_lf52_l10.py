@@ -8,10 +8,6 @@ Discovered via 3-phase BFS/A* (sim validated against engine):
   Phase 3 (14): blue choreography to bring reg2 to (2, 7) adjacent to
     V+reg1 at (2, 6). Final chain: reg1 D via reg2 pivot → consume reg2.
     ddaguepwkt = 12 - 10 - 1 = 1 → WIN.
-
-The chain ops are encoded in grid-coords; the helper at
-solutions/solution_lf52_l7.py exposes `click_chain(g, src, direction)`
-which converts grid → pixel via viewport offset.
 """
 import sys
 sys.path.insert(0, '/Users/kairos/Projects/arc-see')
@@ -20,7 +16,8 @@ U, D, L, R = (0, -1), (0, 1), (-1, 0), (1, 0)
 DIR_A = {U: 1, D: 2, L: 3, R: 4}
 
 
-# Full 41-action plan.  Ops: ('A', dir) or ('C', piece_id, dir).
+# PLAN uses sim piece IDs (stable through the run). A runtime sim tracks
+# where each piece is, so click coordinates can be resolved at click time.
 PLAN = [
     # === Phase 1: load reg1 on V at (4, 2) ===
     ('A', U), ('A', U), ('A', U), ('A', U),
@@ -37,7 +34,7 @@ PLAN = [
     ('C', 'reg1', L),
     ('A', D), ('A', D), ('A', D), ('A', D), ('A', D),
     ('A', R), ('A', R),
-    # === Phase 3: blue-shuffle + reg2 to (2, 7) + final consume ===
+    # === Phase 3: blue-shuffle + reg2 consume ===
     ('C', 'blue2', L),
     ('C', 'blue1', L),
     ('C', 'blue1', D),
@@ -55,26 +52,63 @@ PLAN = [
 ]
 
 
-def _sim_find_piece_grid(sim, pid_logical, iter_state):
-    """Map logical piece_id ('reg1'/'reg2'/'blueN') to its current grid cell
-    AND return the right sprite-name for engine click dispatch.
+def _bootstrap_sim(g):
+    """Build a sim Sim instance from the current live engine state (no json needed)."""
+    from l7_sim import Sim
 
-    Sim piece IDs are fixed (reg1/reg2, blue1..blue10). In the engine,
-    pieces don't have these IDs — the click handler `rozmjeilxc` just
-    finds the topmost fozwvlovdui* sprite at the clicked tile. So we
-    locate by position: take the sim's current position for `pid_logical`
-    and click there.
-    """
-    pieces = dict(iter_state.piece_pos)
-    return pieces[pid_logical]
+    ik = g.env._game.ikhhdzfmarl
+    grid = ik.hncnfaqaddg
+    W, H = grid.ksfoftduxiu, grid.kfiapdsgfly
+
+    static = {}
+    piece_pos = {}
+    vehicle_pos = []
+    dgx_pos = []
+
+    for x in range(W):
+        for y in range(H):
+            names = [s.name for s in grid.ijpoqzvnjt(x, y)]
+            if names:
+                static_names = tuple(
+                    n for n in names
+                    if 'fozwvlovdui' not in n
+                    and n != 'hupkpseyuim2'
+                    and n != 'dgxfozncuiz'
+                )
+                if static_names:
+                    static[(x, y)] = static_names
+
+    reg_count = 0
+    blue_count = 0
+    for s in grid.xpnsbxlatu:
+        n = s.name
+        pos = tuple(s.chahdtpdoz)
+        if n == 'fozwvlovdui':
+            reg_count += 1
+            piece_pos[f'reg{reg_count}'] = pos
+        elif n == 'fozwvlovdui_red':
+            piece_pos['red'] = pos
+        elif n == 'fozwvlovdui_blue':
+            blue_count += 1
+            piece_pos[f'blue{blue_count}'] = pos
+        elif n == 'hupkpseyuim2':
+            vehicle_pos.append(pos)
+        elif n == 'dgxfozncuiz':
+            dgx_pos.append(pos)
+
+    return Sim(
+        static_cells=static,
+        grid_w=W,
+        grid_h=H,
+        piece_pos=tuple(sorted(piece_pos.items())),
+        vehicle_pos=tuple(sorted(vehicle_pos)),
+        dgx_pos=tuple(sorted(dgx_pos)),
+    )
 
 
 def apply_solution(g):
-    """Apply L10 solution to a live `lf52_tool.LF52` game at L10 init.
-    Returns (levels_completed, score)."""
-    from l7_sim import load_init
-
-    sim = load_init('/tmp/l10_init.json')
+    """Apply L10 plan to a live lf52_tool.LF52 game at L10 init."""
+    sim = _bootstrap_sim(g)
 
     def click_chain(src_grid, direction):
         vp = tuple(g.env._game.ikhhdzfmarl.hncnfaqaddg.cdpcbbnfdp)
@@ -92,24 +126,22 @@ def apply_solution(g):
             sim = sim.do_action(op[1])
         else:  # 'C'
             _, pid, direction = op
-            src = _sim_find_piece_grid(sim, pid, sim)
+            src = dict(sim.piece_pos)[pid]
             click_chain(src, direction)
             sim = sim.do_chain(pid, direction)
     return g
 
 
 if __name__ == '__main__':
-    # Prepare engine at L10 init and verify
-    from l10_workspace import make_l10_game
-    g = make_l10_game()
-    ik = g.env._game.ikhhdzfmarl
-    print(f'Start: level={ik.whtqurkphir}, levels_completed={g.obs.levels_completed}')
+    from lf52_tool import LF52
+    from solutions.solution_lf52_l7 import apply_solution as a7
+    from solutions.solution_lf52_l8 import apply_solution as a8
+    from solutions.solution_lf52_l9 import apply_solution as a9
+
+    g = LF52(up_to_level=7, verbose=False)
+    a7(g); a8(g); a9(g)
+    print(f'L10 init: level={g.env._game.ikhhdzfmarl.whtqurkphir}, completed={g.obs.levels_completed}')
     apply_solution(g)
-    print(f'After: level={ik.whtqurkphir}, levels_completed={g.obs.levels_completed}, state={g.obs.state.name}')
-    grid = ik.hncnfaqaddg
-    foz = [(s.name, tuple(s.chahdtpdoz)) for s in grid.xpnsbxlatu if 'fozwvlovdui' in s.name]
-    print(f'foz remaining: {foz}')
-    if g.obs.levels_completed >= 10 or g.obs.state.name == 'WIN':
-        print('\n*** L10 SOLVED! ***')
-    else:
-        print(f'\nL10 not yet complete. state={g.obs.state.name}')
+    print(f'After L10: completed={g.obs.levels_completed}, state={g.obs.state.name}')
+    assert g.obs.levels_completed >= 10 and g.obs.state.name == 'WIN', 'L10 not solved'
+    print('*** L10 SOLVED ***')
