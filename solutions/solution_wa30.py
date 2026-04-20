@@ -668,9 +668,14 @@ def solve_level(env, target_lvl, max_iters=400, verbose=False):
                          and undelivered
                          and all(_on_wall(pp) and _helper_can_grab(pp)
                                  for pp in undelivered))
+        # Detect helper deadlock: helpers haven't made progress in N iters.
+        # Override wait and let the player grab something.
+        helpers_stuck = stuck_count >= 3 and all_deposited
+        if helpers_stuck:
+            all_deposited = False
         if verbose:
             print(f'  [solve_level] it={it} player={state["player"]} ud={undelivered} '
-                  f'all_deposited={all_deposited} held={held_by_helpers}')
+                  f'all_deposited={all_deposited} held={held_by_helpers} stuck={stuck_count}')
         if all_deposited:
             # Clear out: (a) move away from piece-neighbors so helper can
             # approach; (b) ensure player isn't facing an adjacent piece
