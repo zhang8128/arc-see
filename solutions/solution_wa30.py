@@ -24,6 +24,7 @@ after each grab. Helper-unreachable pieces are attempted first (helper
 handles its own). Recent deposits and failures are cached to avoid
 immediate retries; waits (A5 no-ops) let helpers progress.
 """
+import copy
 import sys
 sys.path.insert(0, 'environment_files/wa30/ee6fef47')
 import arc_agi
@@ -137,10 +138,13 @@ def grab_options(piece_pos):
 
 
 def _blocked_unloaded(state, exclude=None):
+    """Cells the unloaded player can't step into. NOTE: the piece being
+    grabbed is ALSO blocking — the engine blocks the player from walking
+    onto a piece's cell even when the player intends to grab it. The
+    `exclude` parameter is kept for compatibility but is no longer used
+    to unblock the target piece."""
     blocked = set(state['walls'])
-    for pp in state['pieces']:
-        if pp != exclude:
-            blocked.add(pp)
+    blocked.update(state['pieces'])  # all pieces block player walking
     blocked.update(state['helpers'])
     blocked.update(state['enemies'])
     return blocked
@@ -276,18 +280,164 @@ def _best_grab_target(state, piece_pos):
     return best[1:]  # (grab_pos, grab_rot, dst, path1, path2)
 
 
-def grab_and_deliver(g, do_step, piece_pos):
-    """Plan fully; bail without executing if total cost exceeds step budget."""
+def _plan_carry_path(state, carried, preferred_dst=None):
+    """Given carrying state, return (dst, path) or None.
+
+    If preferred_dst is given and a path to it exists, use it. Otherwise
+    fall back to the best target/deposit."""
+    dx = carried[0] - state['player'][0]
+    dy = carried[1] - state['player'][1]
+    all_targets = state['targets']
+    free_targets = list(all_targets
+                        - {pp for pp in state['pieces'] if pp != carried})
+    helper_reach = _helper_BFS_reachable(state)
+    deposit_sites = []
+    if helper_reach and state['helpers']:
+        for x in range(GRID_MIN, GRID_MAX + 1, STEP):
+            for y in range(GRID_MIN, GRID_MAX + 1, STEP):
+                c = (x, y)
+                if c in state['pieces'] or c in state['helpers'] or c in state['enemies']:
+                    continue
+                if c in all_targets:
+                    continue
+                nbrs = [(x - STEP, y), (x + STEP, y), (x, y - STEP), (x, y + STEP)]
+                if any(n in helper_reach and n not in state['walls']
+                       for n in nbrs):
+                    deposit_sites.append(c)
+        h0 = state['helpers'][0]
+        deposit_sites.sort(key=lambda c: abs(c[0] - h0[0]) + abs(c[1] - h0[1]))
+    candidates = [('t', r, t) for r, t in enumerate(
+        sorted(free_targets,
+               key=lambda t: (-_exteriority(t, all_targets), t[0] + t[1])))]
+    candidates += [('d', 1000 + r, c) for r, c in enumerate(deposit_sites)]
+    blocked = _blocked_carrying(state, carried)
+    piece_bl = _piece_blocked(state, carried)
+    # Try preferred destination first.
+    if preferred_dst is not None:
+        pg = (preferred_dst[0] - dx, preferred_dst[1] - dy)
+        if in_bounds(pg):
+            p = bfs_player(state['player'], state['rotation'],
+                           lambda pos, r: pos == pg, blocked,
+                           piece_blocked=piece_bl, carry_offset=(dx, dy))
+            if p is not None:
+                return preferred_dst, p
+    best = None
+    for kind, rank, d in candidates:
+        pg = (d[0] - dx, d[1] - dy)
+        if not in_bounds(pg):
+            continue
+        p2 = bfs_player(state['player'], state['rotation'],
+                        lambda p, r: p == pg, blocked,
+                        piece_blocked=piece_bl, carry_offset=(dx, dy))
+        if p2 is None:
+            continue
+        if best is None or (rank, len(p2)) < best[0]:
+            best = ((rank, len(p2)), d, p2)
+    if best is None:
+        return None
+    _, dst, path = best
+    return dst, path
+
+
+def _trial_run(g, env, actions):
+    """Deepcopy engine state, run actions, return (final_game, succeeded_moves)."""
+    trial_game = copy.deepcopy(env._game)
+    prev_g = env._game
+    env._game = trial_game
+    try:
+        for aid in actions:
+            env.step(getattr(GameAction, f'ACTION{aid}'))
+    finally:
+        env._game = prev_g
+    return trial_game
+
+
+def _all_plans(state, piece_pos):
+    """Enumerate all (grab_pos, grab_rot, dst, path1, path2) plans."""
+    blocked_unloaded = _blocked_unloaded(state, exclude=piece_pos)
+    blocked_carrying = _blocked_carrying(state, piece_pos)
+    piece_blocked = _piece_blocked(state, piece_pos)
+    all_targets = state['targets']
+    free_targets = list(all_targets
+                        - {pp for pp in state['pieces'] if pp != piece_pos})
+    helper_reach = _helper_BFS_reachable(state)
+    deposit_sites = []
+    if helper_reach and state['helpers']:
+        for x in range(GRID_MIN, GRID_MAX + 1, STEP):
+            for y in range(GRID_MIN, GRID_MAX + 1, STEP):
+                c = (x, y)
+                if c in state['pieces'] or c in state['helpers'] or c in state['enemies']:
+                    continue
+                if c in all_targets:
+                    continue
+                nbrs = [(x - STEP, y), (x + STEP, y), (x, y - STEP), (x, y + STEP)]
+                if any(n in helper_reach and n not in state['walls']
+                       for n in nbrs):
+                    deposit_sites.append(c)
+        h0 = state['helpers'][0]
+        deposit_sites.sort(key=lambda c: abs(c[0] - h0[0]) + abs(c[1] - h0[1]))
+    candidates = [('t', r, t) for r, t in enumerate(
+        sorted(free_targets,
+               key=lambda t: (-_exteriority(t, all_targets), t[0] + t[1])))]
+    candidates += [('d', 1000 + r, c) for r, c in enumerate(deposit_sites)]
+    plans = []
+    for grab_pos, grab_rot in grab_options(piece_pos):
+        if not in_bounds(grab_pos) or grab_pos in blocked_unloaded:
+            continue
+        path1 = bfs_player(state['player'], state['rotation'],
+                           lambda p, r: p == grab_pos and r == grab_rot,
+                           blocked_unloaded)
+        if path1 is None:
+            continue
+        dx = piece_pos[0] - grab_pos[0]
+        dy = piece_pos[1] - grab_pos[1]
+        for kind, rank, dst in candidates:
+            player_goal = (dst[0] - dx, dst[1] - dy)
+            if not in_bounds(player_goal):
+                continue
+            path2 = bfs_player(grab_pos, grab_rot,
+                               lambda p, r: p == player_goal,
+                               blocked_carrying, piece_blocked=piece_blocked,
+                               carry_offset=(dx, dy))
+            if path2 is None:
+                continue
+            total = len(path1) + 1 + len(path2) + 1
+            plans.append((rank, total, grab_pos, grab_rot, dst, path1, path2))
+    plans.sort(key=lambda p: (p[0], p[1]))   # rank, then cost
+    return plans
+
+
+def grab_and_deliver(g, do_step, piece_pos, env=None):
+    """Try plans in ranked order; trial each to filter dud plans."""
     state = extract(g)
     start_pieces = tuple(sorted(state['pieces']))
-    plan = _best_grab_target(state, piece_pos)
-    if plan is None:
+    plans = _all_plans(state, piece_pos)
+    if not plans:
         return False
-    gp, gr, dst, path1, path2_initial = plan
-    cost = len(path1) + 1 + len(path2_initial) + 1
-    if cost > g.kuncbnslnm.current_steps + 1:
-        # Not enough step budget — bail without executing.
-        return False
+
+    selected = None
+    # Trial-validate each candidate plan and keep the best that actually
+    # moves our piece (in simulation).
+    for rank, cost, gp, gr, dst, path1, path2 in plans:
+        if cost > g.kuncbnslnm.current_steps + 1:
+            continue
+        if env is None:
+            selected = (gp, gr, dst, path1, path2)
+            break
+        trial_actions = list(path1) + [5] + list(path2) + [5]
+        cur_lvl_before = g._current_level_index
+        trial = _trial_run(g, env, trial_actions)
+        if trial._current_level_index > cur_lvl_before:
+            selected = (gp, gr, dst, path1, path2)
+            break
+        trial_pieces = [(s.x, s.y) for s in trial.current_level.get_sprites_by_tag('geezpjgiyd')]
+        # Accept if piece moved to a NEW position (deposited or delivered).
+        if piece_pos not in trial_pieces:
+            selected = (gp, gr, dst, path1, path2)
+            break
+    if selected is None:
+        return False  # no trial-valid plan; wait and retry later
+    gp, gr, dst, path1, path2_initial = selected
     for aid in path1:
         if not do_step(aid):
             return False
@@ -296,54 +446,28 @@ def grab_and_deliver(g, do_step, piece_pos):
     after = extract(g)
     if after['carried_pos'] is None:
         return False
-    carried = after['carried_pos']
-    dx = carried[0] - after['player'][0]
-    dy = carried[1] - after['player'][1]
-    all_targets = after['targets']
-    free_targets = list(all_targets
-                        - {pp for pp in after['pieces'] if pp != carried})
-    helper_reach = _helper_BFS_reachable(after)
-    deposit_sites = []
-    if helper_reach and after['helpers']:
-        for x in range(GRID_MIN, GRID_MAX + 1, STEP):
-            for y in range(GRID_MIN, GRID_MAX + 1, STEP):
-                c = (x, y)
-                if c in after['pieces'] or c in after['helpers'] or c in after['enemies']:
-                    continue
-                if c in all_targets:
-                    continue
-                nbrs = [(x - STEP, y), (x + STEP, y), (x, y - STEP), (x, y + STEP)]
-                if any(n in helper_reach and n not in after['walls']
-                       for n in nbrs):
-                    deposit_sites.append(c)
-        h0 = after['helpers'][0]
-        deposit_sites.sort(key=lambda c: abs(c[0] - h0[0]) + abs(c[1] - h0[1]))
-    candidates = [('t', r, t) for r, t in enumerate(
-        sorted(free_targets,
-               key=lambda t: (-_exteriority(t, all_targets), t[0] + t[1])))]
-    candidates += [('d', 1000 + r, c) for r, c in enumerate(deposit_sites)]
-    blocked = _blocked_carrying(after, carried)
-    piece_bl = _piece_blocked(after, carried)
-    best = None
-    for kind, rank, d in candidates:
-        pg = (d[0] - dx, d[1] - dy)
-        if not in_bounds(pg):
-            continue
-        p2 = bfs_player(after['player'], after['rotation'],
-                        lambda p, r: p == pg, blocked,
-                        piece_blocked=piece_bl, carry_offset=(dx, dy))
-        if p2 is None:
-            continue
-        if best is None or (rank, len(p2)) < best[0]:
-            best = ((rank, len(p2)), p2)
-    if best is None:
-        do_step(5)
-        return True
-    for aid in best[1]:
-        if not do_step(aid):
+    # Carry phase — commit to the originally planned destination. Only
+    # replan if path becomes infeasible; never hop destinations.
+    committed_dst = dst
+    for _ in range(40):
+        s = extract(g)
+        if s['carried_pos'] is None:
+            break
+        if s['carried_pos'] in s['targets']:
             do_step(5)
-            return True
-    do_step(5)
+            break
+        p = _plan_carry_path(s, s['carried_pos'], preferred_dst=committed_dst)
+        if p is None:
+            do_step(5)
+            break
+        new_dst, path = p
+        committed_dst = new_dst   # adopt if switched to a fallback
+        if not path:
+            do_step(5)
+            break
+        if not do_step(path[0]):
+            do_step(5)
+            break
     end_pieces = tuple(sorted(extract(g)['pieces']))
     return end_pieces != start_pieces
 
@@ -452,7 +576,9 @@ def solve_level(env, target_lvl, max_iters=400, verbose=False):
                state['carried_pos'])
         if sig == last_state_sig:
             stuck_count += 1
-            if stuck_count > 6:
+            # Only bail if nothing moves across many iters AND no helper
+            # is carrying (they might still be walking to pieces).
+            if stuck_count > 40:
                 return taken, level_advanced()
         else:
             stuck_count = 0
@@ -494,20 +620,36 @@ def solve_level(env, target_lvl, max_iters=400, verbose=False):
             return False
         if not undelivered:
             if held_by_helpers:
+                # Helper is actively working on a piece — wait. Persist
+                # recent_deposits so we don't immediately re-grab pieces
+                # helper hasn't claimed yet.
                 do_step(5)
                 continue
-            if recent_deposits or recent_failures:
-                recent_deposits.clear()
+            if recent_deposits:
+                # Helper is not carrying anything; deposits must wait or
+                # helper ignored them. Give it a few steps to try.
+                if recent_failures and undelivered_all:
+                    recent_failures.clear()
+                do_step(5)
+                # Check if helper started carrying after this wait.
+                new_held = {(g.nsevyuople[x].x, g.nsevyuople[x].y)
+                            for x in tag_sprites(g, 'kdweefinfi')
+                            if x in g.nsevyuople}
+                if not new_held:
+                    # Helper truly idle — clear and try again.
+                    recent_deposits.clear()
+                continue
+            if recent_failures:
                 recent_failures.clear()
-                do_step(5)   # let helper move
+                do_step(5)
                 continue
             if undelivered_all and state['helpers']:
                 do_step(5)
                 continue
             return taken, level_advanced()
 
-        # Pick piece: prefer helper-unreachable first (let helpers handle
-        # their own), then closest to a free target.
+        # Pick piece: prefer helper-unreachable first, then closest to a
+        # free target (picks pieces closer to the target zone).
         free_targets = list(state['targets'] - set(state['pieces']))
 
         def piece_score(pp):
@@ -517,6 +659,75 @@ def solve_level(env, target_lvl, max_iters=400, verbose=False):
             return (hreach, min(abs(pp[0] - t[0]) + abs(pp[1] - t[1])
                                 for t in free_targets))
         undelivered.sort(key=piece_score)
+        # If ALL remaining undelivered pieces are already sitting on a
+        # wall cell AND helper-reachable, they're deposits — wait for
+        # helper rather than re-shuffling them.
+        def _on_wall(pp):
+            return pp in state['walls']
+        all_deposited = (state['helpers']
+                         and undelivered
+                         and all(_on_wall(pp) and _helper_can_grab(pp)
+                                 for pp in undelivered))
+        if verbose:
+            print(f'  [solve_level] it={it} player={state["player"]} ud={undelivered} '
+                  f'all_deposited={all_deposited} held={held_by_helpers}')
+        if all_deposited:
+            # Clear out: (a) move away from piece-neighbors so helper can
+            # approach; (b) ensure player isn't facing an adjacent piece
+            # (else A5 would grab/drop uselessly).
+            piece_neighbors = set()
+            for pp in (list(undelivered) + list(held_by_helpers)):
+                for dx, dy in [(-STEP, 0), (STEP, 0), (0, -STEP), (0, STEP)]:
+                    piece_neighbors.add((pp[0] + dx, pp[1] + dy))
+            bl = _blocked_unloaded(state)
+
+            def _is_safe_wait(player_pos, player_rot):
+                if player_pos in piece_neighbors:
+                    return False
+                # Check if A5 would grab/drop: facing a piece.
+                fdx, fdy = {0: (0, -STEP), 90: (STEP, 0),
+                            180: (0, STEP), 270: (-STEP, 0)}[player_rot]
+                faced = (player_pos[0] + fdx, player_pos[1] + fdy)
+                if faced in state['pieces']:
+                    return False
+                return True
+
+            if not _is_safe_wait(state['player'], state['rotation']):
+                # Try to move to a safer cell / rotation.
+                moved = False
+                for aid, (dx, dy, new_rot) in DIRS.items():
+                    npos = (state['player'][0] + dx, state['player'][1] + dy)
+                    if not in_bounds(npos) or npos in bl:
+                        # Stepping into a wall doesn't move but does rotate.
+                        # If that rotation is safe, use it.
+                        if _is_safe_wait(state['player'], new_rot):
+                            do_step(aid)
+                            moved = True
+                            break
+                        continue
+                    if npos in piece_neighbors:
+                        continue
+                    if _is_safe_wait(npos, new_rot):
+                        do_step(aid)
+                        moved = True
+                        break
+                if not moved:
+                    # Accept ANY move that at least rotates away from piece.
+                    for aid, (dx, dy, new_rot) in DIRS.items():
+                        fdx, fdy = {0: (0, -STEP), 90: (STEP, 0),
+                                    180: (0, STEP), 270: (-STEP, 0)}[new_rot]
+                        npos = (state['player'][0] + dx, state['player'][1] + dy)
+                        pos_after = npos if (in_bounds(npos) and npos not in bl) else state['player']
+                        faced = (pos_after[0] + fdx, pos_after[1] + fdy)
+                        if faced not in state['pieces']:
+                            do_step(aid)
+                            moved = True
+                            break
+                if not moved:
+                    do_step(5)
+            else:
+                do_step(5)
+            continue
 
         progressed = False
         attempted = 0
@@ -525,7 +736,7 @@ def solve_level(env, target_lvl, max_iters=400, verbose=False):
                 break  # try at most 1 piece per iter; wait if it fails
             attempted += 1
             before_pieces = set(state['pieces'])
-            if grab_and_deliver(g, do_step, pp):
+            if grab_and_deliver(g, do_step, pp, env=env):
                 progressed = True
                 recent_failures.discard(pp)
                 ns = extract(g)
